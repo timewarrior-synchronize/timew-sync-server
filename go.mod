@@ -4,4 +4,9 @@ go 1.15
 
 replace timewsync/sync => ./sync
 
-require timewsync/sync v0.0.0-00010101000000-000000000000
+replace timewsync => ./
+
+require (
+	timewsync v0.0.0-00010101000000-000000000000 // indirect
+	timewsync/sync v0.0.0-00010101000000-000000000000
+)
