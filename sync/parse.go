@@ -14,14 +14,20 @@ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEM
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 package sync
 
-type RequestData string
+import "encoding/json"
 
-// Placeholder for ParseJSON function
-func ParseJSON(json string) RequestData {
+type RequestData struct {
+	userId int
+	clientId int
+	intervalData []string
+}
 
-	panic("parse.go: ParseJSON isn't implemented!")
-	return ""
+func ParseJSON(jsonInput string) (RequestData, error) {
+	var requestData RequestData
+
+	err := json.Unmarshal([]byte(jsonInput), &requestData)
+
+	return requestData, err
 }
