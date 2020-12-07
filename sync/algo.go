@@ -17,7 +17,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 package sync
 
-// Placeholderfunction for Sync
+// Placeholder function for Sync
 func Sync(data RequestData) string {
 
 	panic("sync/algo: Sync isn't implemented!")
