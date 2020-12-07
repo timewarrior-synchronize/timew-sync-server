@@ -1,4 +1,4 @@
-package tsync
+package sync
 
 import (
 	"github.com/google/go-cmp/cmp"

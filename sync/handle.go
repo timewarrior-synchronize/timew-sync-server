@@ -15,12 +15,22 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package tsync
+package sync
 
-// Placeholder function for Sync
-func Sync(data RequestData) string {
+import (
+	"io/ioutil"
+	"log"
+	"net/http"
+)
 
-	panic("tsync/algo: Sync isn't implemented!")
+// HandleSyncRequest receives sync requests and starts the sync
+// process with the received data.
+func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
+	responseData, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Printf("Error reading sync request. Ignoring request.")
+	}
 
-	return ""
+	requestData, _ := ParseJSON(string(responseData))
+	Sync(requestData)
 }

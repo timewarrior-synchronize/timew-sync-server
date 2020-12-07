@@ -18,13 +18,13 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package main
 
 import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/tsync"
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/sync"
 	"log"
 	"net/http"
 )
 
 func main() {
-	http.HandleFunc("/api/tsync", tsync.HandleSyncRequest)
+	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
