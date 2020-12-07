@@ -18,6 +18,9 @@ package sync
 
 import "encoding/json"
 
+// RequestData represents a sync request.
+// It contains the unique client and user id's who are syncing
+// and all their tracked intervals.
 type RequestData struct {
 	UserId int `json:"userID"`
 	ClientId int `json:"clientId"`
