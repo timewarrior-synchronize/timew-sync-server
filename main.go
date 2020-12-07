@@ -1,5 +1,5 @@
 /*
-Copyright 2020 <COPYRIGHT HOLDER>
+Copyright 2020 - Jan Bormet, Anna-Felicitas Hausmann, Joachim Schmidt, Vincent Stollenwerk, Arne Turuc
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -17,12 +17,14 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 package main
 
-import "fmt"
+import (
+	"log"
+	"net/http"
+	"timewsync/sync"
+)
 
 func main() {
-	fmt.Println(SayHi("Timewarrior"))
-}
+	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
 
-func SayHi(name string) string {
-	return fmt.Sprintf("Hi, %v", name)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
