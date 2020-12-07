@@ -14,20 +14,23 @@ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEM
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-package sync
 
-import "encoding/json"
+package tsync
 
-type RequestData struct {
-	userId int
-	clientId int
-	intervalData []string
-}
+import (
+	"io/ioutil"
+	"log"
+	"net/http"
+)
 
-func ParseJSON(jsonInput string) (RequestData, error) {
-	var requestData RequestData
+// HandleSyncRequest receives tsync requests and starts the tsync
+// process with the received data.
+func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
+	responseData, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Printf("Error reading sync request. Ignoring request.")
+	}
 
-	err := json.Unmarshal([]byte(jsonInput), &requestData)
-
-	return requestData, err
+	requestData, _ := ParseJSON(string(responseData))
+	Sync(requestData)
 }
