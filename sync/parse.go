@@ -24,7 +24,9 @@ type RequestData struct {
 	IntervalData []string `json:"intervalData"`
 }
 
-func ParseJSON(jsonInput string) (RequestData, error) {
+// ParseSyncRequest parses the JSON of a sync request into a
+// RequestData struct.
+func ParseSyncRequest(jsonInput string) (RequestData, error) {
 	var requestData RequestData
 
 	err := json.Unmarshal([]byte(jsonInput), &requestData)

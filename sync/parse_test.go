@@ -22,7 +22,7 @@ func TestParseJSON(t *testing.T) {
 		IntervalData: []string{"2020-11.data", "2020-12.data"},
 	}
 
-	result, err := ParseJSON(testInput)
+	result, err := ParseSyncRequest(testInput)
 	if err != nil {
 		t.Errorf("Unexpected Error: %v", err)
 	}
