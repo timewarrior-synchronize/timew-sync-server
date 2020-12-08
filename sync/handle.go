@@ -18,6 +18,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package sync
 
 import (
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -26,11 +27,22 @@ import (
 // HandleSyncRequest receives sync requests and starts the sync
 // process with the received data.
 func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
-	responseData, err := ioutil.ReadAll(req.Body)
+	requestBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("Error reading sync request. Ignoring request.")
 	}
 
-	requestData, _ := ParseSyncRequest(string(responseData))
-	Sync(requestData)
+	requestData, _ := ParseSyncRequest(string(requestBody))
+	syncData := Sync(requestData)
+	responseBody := ToJSON(syncData)
+
+	sendResponse(w, responseBody)
+}
+
+// sendResponse writes data to response buffer
+func sendResponse(w http.ResponseWriter, data string) {
+	_, err := io.WriteString(w, data)
+	if err != nil {
+		log.Printf("sync/handle.go:sendResponse Error writing response to ResponseWriter")
+	}
 }

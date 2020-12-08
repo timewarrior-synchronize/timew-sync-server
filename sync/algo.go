@@ -19,6 +19,5 @@ package sync
 
 // Placeholder function for Sync
 func Sync(data RequestData) string {
-
 	panic("sync/algo: Sync isn't implemented!")
 }

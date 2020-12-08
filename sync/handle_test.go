@@ -17,27 +17,26 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 package sync
 
-import "encoding/json"
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
 
-// RequestData represents a sync request.
-// It contains the unique client and user id's who are syncing
-// and all their tracked intervals.
-type RequestData struct {
-	UserId int `json:"userID"`
-	ClientId int `json:"clientId"`
-	IntervalData []string `json:"intervalData"`
-}
+func TestSendResponse(t *testing.T) {
+	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+	rr := httptest.NewRecorder()
+	sendResponse(rr, "test")
+	// Check the status code is what we expect.
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
 
-// ParseSyncRequest parses the JSON of a sync request into a
-// RequestData struct.
-func ParseSyncRequest(jsonInput string) (RequestData, error) {
-	var requestData RequestData
-
-	err := json.Unmarshal([]byte(jsonInput), &requestData)
-
-	return requestData, err
-}
-
-func ToJSON(data string) string {
-	panic("parse.go: ToJson isn't implemented!")
+	// Check the response body is what we expect.
+	expected := `test`
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expected)
+	}
 }
