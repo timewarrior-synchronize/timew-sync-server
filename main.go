@@ -18,9 +18,9 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package main
 
 import (
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/sync"
 	"log"
 	"net/http"
-	"timewsync/sync"
 )
 
 func main() {

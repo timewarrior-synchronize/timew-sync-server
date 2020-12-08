@@ -31,6 +31,6 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
 		log.Printf("Error reading sync request. Ignoring request.")
 	}
 
-	requestData := ParseJSON(string(responseData))
+	requestData, _ := ParseSyncRequest(string(responseData))
 	Sync(requestData)
 }
