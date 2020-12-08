@@ -15,14 +15,16 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package sync
+package storage
 
-import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
-)
+type EphemeralStorage struct {
+	intervals []string
+}
 
-// Placeholder function for Sync
-func Sync(data RequestData) []string {
-	storage.GlobalStorage.OverwriteIntervals(data.IntervalData)
-	return storage.GlobalStorage.GetIntervals()
+func (es EphemeralStorage) GetIntervals() []string {
+	return es.intervals
+}
+
+func (es *EphemeralStorage) OverwriteIntervals(intervals []string) {
+	es.intervals = intervals
 }

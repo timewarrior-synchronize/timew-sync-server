@@ -15,14 +15,31 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package sync
+package storage
 
 import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	"testing"
 )
 
-// Placeholder function for Sync
-func Sync(data RequestData) []string {
-	storage.GlobalStorage.OverwriteIntervals(data.IntervalData)
-	return storage.GlobalStorage.GetIntervals()
+func TestEphemeralStorage(t *testing.T) {
+	var s Storage
+	s = &EphemeralStorage{}
+
+	intervals := []string{
+		"inc 20201202T080000Z - 20201202T10000Z",
+		"inc 20201202T110000Z - 20201202T12000Z",
+	}
+
+	s.OverwriteIntervals(intervals)
+	result := s.GetIntervals()
+
+	if len(result) != len(intervals) {
+		t.Errorf("length doesn't match, expected %v, got %v", len(intervals), len(result))
+	}
+
+	for i, x := range result {
+		if x != intervals[i] {
+			t.Errorf("interval data does not match, expected %v, got %v", intervals[i], x)
+		}
+	}
 }
