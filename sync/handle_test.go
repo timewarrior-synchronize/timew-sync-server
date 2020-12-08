@@ -17,17 +17,26 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 package sync
 
-type RequestData string
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
 
-// Placeholder for ParseJSON function
-func ParseJSON(json string) RequestData {
+func TestSendResponse(t *testing.T) {
+	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+	rr := httptest.NewRecorder()
+	sendResponse(rr, "test")
+	// Check the status code is what we expect.
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
 
-	panic("parse.go: ParseJSON isn't implemented!")
-	return ""
-}
-
-func ToJSON(data string) string {
-
-	panic("parse.go: ToJson isn't implemented!")
-	return ""
+	// Check the response body is what we expect.
+	expected := `test`
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expected)
+	}
 }
