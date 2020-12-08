@@ -30,7 +30,8 @@ type UserId int
 // for a given user. A user always has at least one client.
 type ClientId int
 
-// An Interval represents
+// An Interval represents a time from Start to End.
+// It also contains LastModified timestamp and Deleted flag needed for synchronization
 type Interval struct {
 	Start time.Time
 	End   time.Time
@@ -39,6 +40,7 @@ type Interval struct {
 	Deleted      bool
 }
 
+// Storage defines an interface for accessing stored intervals.
 type Storage interface {
 	GetIntervals() []string
 	OverwriteIntervals(intervals []string)

@@ -38,10 +38,13 @@ func ParseSyncRequest(jsonInput string) (RequestData, error) {
 	return requestData, err
 }
 
+// ResponseData represents a sync response
+// It contains the new interval for the client
 type ResponseData struct {
 	IntervalData []string `json:"intervalData"`
 }
 
+// ToJSON creates JSON for response body from interval data and returns it as string
 func ToJSON(data []string) (string, error) {
 	var responseData ResponseData
 	responseData.IntervalData = data
