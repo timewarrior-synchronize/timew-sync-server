@@ -27,15 +27,22 @@ import (
 // HandleSyncRequest receives sync requests and starts the sync
 // process with the received data.
 func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
-	requestBody, err := ioutil.ReadAll(req.Body)
-	if err != nil {
+	requestBody, reqError := ioutil.ReadAll(req.Body)
+	if reqError != nil {
 		log.Printf("Error reading sync request. Ignoring request.")
+		return
 	}
-
-	requestData, _ := ParseSyncRequest(string(requestBody))
+	requestData, parseError := ParseSyncRequest(string(requestBody))
+	if parseError != nil {
+		log.Printf("Error parsing sync request. Ignoring request.")
+		return
+	}
 	syncData := Sync(requestData)
-	responseBody := ToJSON(syncData)
-
+	responseBody, respError := ToJSON(syncData)
+	if respError != nil {
+		log.Printf("Error creating response JSON. Ignoring request.")
+		return
+	}
 	sendResponse(w, responseBody)
 }
 
