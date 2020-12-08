@@ -23,11 +23,9 @@ type RequestData string
 func ParseJSON(json string) RequestData {
 
 	panic("parse.go: ParseJSON isn't implemented!")
-	return ""
 }
 
 func ToJSON(data string) string {
 
 	panic("parse.go: ToJson isn't implemented!")
-	return ""
 }
