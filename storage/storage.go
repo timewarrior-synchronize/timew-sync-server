@@ -43,3 +43,5 @@ type Storage interface {
 	getIntervals() []string
 	overwriteIntervals(intervals []string)
 }
+
+var GlobalStorage Storage
