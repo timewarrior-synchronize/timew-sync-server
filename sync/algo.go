@@ -17,7 +17,12 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 package sync
 
+import (
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+)
+
 // Placeholder function for Sync
-func Sync(data RequestData) string {
-	panic("sync/algo: Sync isn't implemented!")
+func Sync(data RequestData) []string {
+	storage.GlobalStorage.OverwriteIntervals(data.IntervalData)
+	return storage.GlobalStorage.GetIntervals()
 }

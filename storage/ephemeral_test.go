@@ -30,8 +30,8 @@ func TestEphemeralStorage(t *testing.T) {
 		"inc 20201202T110000Z - 20201202T12000Z",
 	}
 
-	s.overwriteIntervals(intervals)
-	result := s.getIntervals()
+	s.OverwriteIntervals(intervals)
+	result := s.GetIntervals()
 
 	if len(result) != len(intervals) {
 		t.Errorf("length doesn't match, expected %v, got %v", len(intervals), len(result))

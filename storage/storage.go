@@ -40,8 +40,8 @@ type Interval struct {
 }
 
 type Storage interface {
-	getIntervals() []string
-	overwriteIntervals(intervals []string)
+	GetIntervals() []string
+	OverwriteIntervals(intervals []string)
 }
 
 var GlobalStorage Storage

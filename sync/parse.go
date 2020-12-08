@@ -38,6 +38,6 @@ func ParseSyncRequest(jsonInput string) (RequestData, error) {
 	return requestData, err
 }
 
-func ToJSON(data string) string {
+func ToJSON(data []string) string {
 	panic("parse.go: ToJson isn't implemented!")
 }

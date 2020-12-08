@@ -21,10 +21,10 @@ type EphemeralStorage struct {
 	intervals []string
 }
 
-func (es EphemeralStorage) getIntervals() []string {
+func (es EphemeralStorage) GetIntervals() []string {
 	return es.intervals
 }
 
-func (es *EphemeralStorage) overwriteIntervals(intervals []string) {
+func (es *EphemeralStorage) OverwriteIntervals(intervals []string) {
 	es.intervals = intervals
 }
