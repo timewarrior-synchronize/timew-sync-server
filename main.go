@@ -25,7 +25,7 @@ import (
 )
 
 func main() {
-	storage.GlobalStorage = &EphemeralStorage{}
+	storage.GlobalStorage = &storage.EphemeralStorage{}
 
 	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
 
