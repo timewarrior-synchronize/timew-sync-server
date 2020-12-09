@@ -15,19 +15,28 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package main
+package sync
 
 import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/sync"
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
-	"log"
 	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
-func main() {
-	storage.GlobalStorage = &storage.EphemeralStorage{}
+func TestSendResponse(t *testing.T) {
+	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+	rr := httptest.NewRecorder()
+	sendResponse(rr, "test")
+	// Check the status code is what we expect.
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
 
-	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
-
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Check the response body is what we expect.
+	expected := `test`
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expected)
+	}
 }

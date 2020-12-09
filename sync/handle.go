@@ -15,19 +15,41 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package main
+package sync
 
 import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/sync"
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
 
-func main() {
-	storage.GlobalStorage = &storage.EphemeralStorage{}
+// HandleSyncRequest receives sync requests and starts the sync
+// process with the received data.
+func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
+	requestBody, reqError := ioutil.ReadAll(req.Body)
+	if reqError != nil {
+		log.Printf("Error reading sync request. Ignoring request.")
+		return
+	}
+	requestData, parseError := ParseSyncRequest(string(requestBody))
+	if parseError != nil {
+		log.Printf("Error parsing sync request. Ignoring request.")
+		return
+	}
+	syncData := Sync(requestData)
+	responseBody, respError := ToJSON(syncData)
+	if respError != nil {
+		log.Printf("Error creating response JSON. Ignoring request.")
+		return
+	}
+	sendResponse(w, responseBody)
+}
 
-	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
-
-	log.Fatal(http.ListenAndServe(":8080", nil))
+// sendResponse writes data to response buffer
+func sendResponse(w http.ResponseWriter, data string) {
+	_, err := io.WriteString(w, data)
+	if err != nil {
+		log.Printf("sync/handle.go:sendResponse Error writing response to ResponseWriter")
+	}
 }

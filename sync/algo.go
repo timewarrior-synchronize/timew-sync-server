@@ -15,19 +15,14 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package main
+package sync
 
 import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/sync"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
-	"log"
-	"net/http"
 )
 
-func main() {
-	storage.GlobalStorage = &storage.EphemeralStorage{}
-
-	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
-
-	log.Fatal(http.ListenAndServe(":8080", nil))
+// Placeholder function for Sync
+func Sync(data RequestData) []string {
+	storage.GlobalStorage.OverwriteIntervals(data.IntervalData)
+	return storage.GlobalStorage.GetIntervals()
 }

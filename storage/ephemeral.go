@@ -15,19 +15,23 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package main
+package storage
 
-import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/sync"
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
-	"log"
-	"net/http"
-)
+// EphemeralStorage represents storage of user interval data.
+// It contains the time intervals.
+// Each interval is represented as a string in intervals.
+// Data is not stored persistently.
+type EphemeralStorage struct {
+	intervals []string
+}
 
-func main() {
-	storage.GlobalStorage = &storage.EphemeralStorage{}
+// GetIntervals
+// getter for intervals field of EphemeralStorage struct
+func (es EphemeralStorage) GetIntervals() []string {
+	return es.intervals
+}
 
-	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
-
-	log.Fatal(http.ListenAndServe(":8080", nil))
+// OverwriteIntervals sets intervals field of given EphemeralStorage struct
+func (es *EphemeralStorage) OverwriteIntervals(intervals []string) {
+	es.intervals = intervals
 }

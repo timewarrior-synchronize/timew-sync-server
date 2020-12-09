@@ -16,14 +16,3 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 */
 
 package main
-
-import (
-	"testing"
-)
-
-func TestSayHi(t *testing.T) {
-	greetings := SayHi("test")
-	if greetings != "Hi, test" {
-		t.Errorf("Returned message was incorrect, got: %v, want: %v", greetings, "Hi, test")
-	}
-}

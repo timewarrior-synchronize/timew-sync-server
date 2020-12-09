@@ -15,19 +15,35 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package main
+package storage
 
 import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/sync"
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
-	"log"
-	"net/http"
+	"time"
 )
 
-func main() {
-	storage.GlobalStorage = &storage.EphemeralStorage{}
+// A UserId represents a unique ID assigned to each user of the
+// timewarrior sync server
+type UserId int
 
-	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
+// A ClientId represents an ID assigned to each client of a user. The
+// client IDs are not globally unique, instead they are only unique
+// for a given user. A user always has at least one client.
+type ClientId int
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+// An Interval represents a time from Start to End.
+// It also contains LastModified timestamp and Deleted flag needed for synchronization
+type Interval struct {
+	Start time.Time
+	End   time.Time
+
+	LastModified time.Time
+	Deleted      bool
 }
+
+// Storage defines an interface for accessing stored intervals.
+type Storage interface {
+	GetIntervals() []string
+	OverwriteIntervals(intervals []string)
+}
+
+var GlobalStorage Storage

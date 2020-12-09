@@ -15,19 +15,39 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package main
+package sync
 
-import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/sync"
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
-	"log"
-	"net/http"
-)
+import "encoding/json"
 
-func main() {
-	storage.GlobalStorage = &storage.EphemeralStorage{}
+// RequestData represents a sync request.
+// It contains the unique client and user id's who are syncing
+// and all their tracked intervals.
+type RequestData struct {
+	UserId       int      `json:"userID"`
+	ClientId     int      `json:"clientId"`
+	IntervalData []string `json:"intervalData"`
+}
 
-	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
+// ParseSyncRequest parses the JSON of a sync request into a
+// RequestData struct.
+func ParseSyncRequest(jsonInput string) (RequestData, error) {
+	var requestData RequestData
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	err := json.Unmarshal([]byte(jsonInput), &requestData)
+
+	return requestData, err
+}
+
+// ResponseData represents a sync response
+// It contains the new interval for the client
+type ResponseData struct {
+	IntervalData []string `json:"intervalData"`
+}
+
+// ToJSON creates JSON for response body from interval data and returns it as string
+func ToJSON(data []string) (string, error) {
+	var responseData ResponseData
+	responseData.IntervalData = data
+	result, err := json.Marshal(responseData)
+	return string(result), err
 }
