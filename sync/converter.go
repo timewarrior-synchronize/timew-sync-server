@@ -25,6 +25,7 @@ import (
 
 // StringsToIntervals converts a slice of Strings (each string encoding one time interval) to a slice of the
 // corresponding interval structs
+// The LastModified timestamps are initialized to time.Now()
 func StringsToIntervals(data []string) []storage.Interval {
 	now := time.Now()
 	layout := "20060102T150405Z"
