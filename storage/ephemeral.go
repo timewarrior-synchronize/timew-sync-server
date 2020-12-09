@@ -19,7 +19,8 @@ package storage
 
 // EphemeralStorage represents storage of user interval data.
 // It contains the time intervals.
-// Each interval is represented as a string in intervals
+// Each interval is represented as a string in intervals.
+// Data is not stored persistently.
 type EphemeralStorage struct {
 	intervals []string
 }
