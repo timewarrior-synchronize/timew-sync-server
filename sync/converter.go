@@ -15,38 +15,38 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package storage
+package sync
 
 import (
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	"strings"
 	"time"
 )
 
-// A UserId represents a unique ID assigned to each user of the
-// timewarrior sync server
-type UserId int
+// StringsToIntervals converts a slice of Strings (each string encoding one time interval) to a slice of the
+// corresponding interval structs
+func StringsToIntervals(data []string) []storage.Interval {
+	now := time.Now()
+	layout := "20060102T150405Z"
+	result := make([]storage.Interval, len(data), len(data))
 
-// A ClientId represents an ID assigned to each client of a user. The
-// client IDs are not globally unique, instead they are only unique
-// for a given user. A user always has at least one client.
-type ClientId int
-
-// An Interval represents a time from Start to End.
-// It also contains LastModified timestamp and Deleted flag needed for synchronization
-// The Tags filed represents the intervals tags as a slice of string. If there are no tags associated with this
-// particular interval, tags should be a slice of length 0
-type Interval struct {
-	Start time.Time
-	End   time.Time
-	Tags  []string
-
-	LastModified time.Time
-	Deleted      bool
+	for i, element := range data {
+		tokens := strings.Fields(element)
+		startString := tokens[1]
+		endString := tokens[3]
+		var tags []string
+		if len(tokens) > 4 {
+			tags = tokens[5:]
+		} else {
+			tags = []string{}
+		}
+		result[i] = storage.Interval{}
+		result[i].Start, _ = time.Parse(layout, startString)
+		result[i].End, _ = time.Parse(layout, endString)
+		result[i].Tags = make([]string, len(tags), len(tags))
+		copy(result[i].Tags, tags)
+		result[i].LastModified = now
+		result[i].Deleted = false
+	}
+	return result
 }
-
-// Storage defines an interface for accessing stored intervals.
-type Storage interface {
-	GetIntervals() []string
-	OverwriteIntervals(intervals []string)
-}
-
-var GlobalStorage Storage
