@@ -23,8 +23,8 @@ import "encoding/json"
 // It contains the unique client and user id's who are syncing
 // and all their tracked intervals.
 type RequestData struct {
-	UserId int `json:"userID"`
-	ClientId int `json:"clientId"`
+	UserId       int      `json:"userID"`
+	ClientId     int      `json:"clientId"`
 	IntervalData []string `json:"intervalData"`
 }
 
@@ -38,6 +38,16 @@ func ParseSyncRequest(jsonInput string) (RequestData, error) {
 	return requestData, err
 }
 
-func ToJSON(data []string) string {
-	panic("parse.go: ToJson isn't implemented!")
+// ResponseData represents a sync response
+// It contains the new interval for the client
+type ResponseData struct {
+	IntervalData []string `json:"intervalData"`
+}
+
+// ToJSON creates JSON for response body from interval data and returns it as string
+func ToJSON(data []string) (string, error) {
+	var responseData ResponseData
+	responseData.IntervalData = data
+	result, err := json.Marshal(responseData)
+	return string(result), err
 }
