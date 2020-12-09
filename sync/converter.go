@@ -18,36 +18,54 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package sync
 
 import (
+	"fmt"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
 	"strings"
 	"time"
 )
 
-// StringsToIntervals converts a slice of Strings (each string encoding one time interval) to a slice of the
+// layout used by timewarrior. Needed for time conversion. See e.g. time.Parse
+const timeLayout = "20060102T150405Z"
+
+// StringsToIntervals converts a slice of strings (each string encoding one time interval) to a slice of the
 // corresponding interval structs
 // The LastModified timestamps are initialized to time.Now()
 func StringsToIntervals(data []string) []storage.Interval {
 	now := time.Now()
-	layout := "20060102T150405Z"
 	result := make([]storage.Interval, len(data), len(data))
 
 	for i, element := range data {
-		tokens := strings.Fields(element)
+		tokens := strings.Fields(element) // tokens should be ["inc", startTime, "-", endTime] for no tags and
+		// ["inc", startTime, "-", endTime, "#", tag1, tag2, ..., tagN] for N > 0 tags
 		startString := tokens[1]
 		endString := tokens[3]
 		var tags []string
-		if len(tokens) > 4 {
+		if len(tokens) > 4 { // prepare tags, iff data[i] contains tags
 			tags = tokens[5:]
-		} else {
+		} else { // initialize to empty slice else
 			tags = []string{}
 		}
 		result[i] = storage.Interval{}
-		result[i].Start, _ = time.Parse(layout, startString)
-		result[i].End, _ = time.Parse(layout, endString)
+		result[i].Start, _ = time.Parse(timeLayout, startString) // time.Parse uses UTC as default
+		result[i].End, _ = time.Parse(timeLayout, endString)
 		result[i].Tags = make([]string, len(tags), len(tags))
 		copy(result[i].Tags, tags)
 		result[i].LastModified = now
 		result[i].Deleted = false
+	}
+	return result
+}
+
+// IntervalsToStrings converts a slice of Interval structs to a slice of the corresponding timewarrior interval strings
+// Care: the LastModified information is not contained in the string representation
+func IntervalsToStrings(intervals []storage.Interval) []string {
+	result := make([]string, len(intervals), len(intervals))
+
+	for i, element := range intervals {
+		result[i] = fmt.Sprintf("inc %v - %v", element.Start.Format(timeLayout), element.End.Format(timeLayout))
+		if len(element.Tags) > 0 {
+			result[i] = result[i] + fmt.Sprintf(" # %v", strings.Join(element.Tags, " "))
+		}
 	}
 	return result
 }

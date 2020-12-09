@@ -55,7 +55,7 @@ func TestStringsToIntervals(t *testing.T) {
 	}
 	actual := StringsToIntervals(testData)
 	if len(actual) != 3 {
-		t.Errorf("wrong number of intervals returned: expected 3 got %v", len(actual))
+		t.Errorf("wrong number of intervals returned: expected 3 got %v\n", len(actual))
 	}
 	for i, actualInterval := range actual {
 		if !actualInterval.Start.Equal(expected[i].Start) {
@@ -71,4 +71,48 @@ func TestStringsToIntervals(t *testing.T) {
 			t.Errorf("wrong value of deleted flag for interval %v: expected false got %v", i, actualInterval.Deleted)
 		}
 	}
+}
+
+func TestIntervalsToStrings(t *testing.T) {
+	loc, _ := time.LoadLocation("UTC")
+	testData := make([]storage.Interval, 3, 3)
+	testData[0] = storage.Interval{
+		Start:        time.Date(2020, 11, 25, 9, 39, 10, 0, loc),
+		End:          time.Date(2020, 11, 25, 9, 39, 43, 0, loc),
+		Tags:         []string{},
+		LastModified: time.Time{},
+		Deleted:      false,
+	}
+	testData[1] = storage.Interval{
+		Start:        time.Date(2020, 11, 25, 9, 52, 40, 0, loc),
+		End:          time.Date(2020, 11, 25, 9, 52, 53, 0, loc),
+		Tags:         []string{"test"},
+		LastModified: time.Time{},
+		Deleted:      false,
+	}
+	testData[2] = storage.Interval{
+		Start:        time.Date(2020, 12, 9, 14, 5, 21, 0, loc),
+		End:          time.Date(2020, 12, 9, 14, 5, 33, 0, loc),
+		Tags:         []string{"a", "b", "c"},
+		LastModified: time.Time{},
+		Deleted:      false,
+	}
+
+	expected := []string{
+		"inc 20201125T093910Z - 20201125T093943Z",
+		"inc 20201125T095240Z - 20201125T095253Z # test",
+		"inc 20201209T140521Z - 20201209T140533Z # a b c",
+	}
+
+	actual := IntervalsToStrings(testData)
+	if len(actual) != 3 {
+		t.Errorf("wrong number of strings returned: expected 3 got %v\n", len(actual))
+	}
+
+	for i, a := range actual {
+		if a != expected[i] {
+			t.Errorf("wrong conversion for interval %v: expected \"%v\" got \"%v\"\n", i, a, expected[i])
+		}
+	}
+
 }
