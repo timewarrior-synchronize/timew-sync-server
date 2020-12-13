@@ -19,6 +19,7 @@ package sync
 
 import (
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	"github.com/google/go-cmp/cmp"
 	"reflect"
 	"testing"
 	"time"
@@ -64,7 +65,7 @@ func TestStringsToIntervals(t *testing.T) {
 		if !actualInterval.End.Equal(expected[i].End) {
 			t.Errorf("wrong end time for interval %v: expected %v got %v", i, expected[i].End.String(), actualInterval.End.String())
 		}
-		if !reflect.DeepEqual(actualInterval.Tags, expected[i].Tags) {
+		if !cmp.Equal(actualInterval.Tags, expected[i].Tags) {
 			t.Errorf("wrong tags for interval %v: expected %v of type %v got %v of type %v", i, expected[i].Tags, reflect.TypeOf(expected[i].Tags), actualInterval.Tags, reflect.TypeOf(actualInterval.Tags))
 		}
 		if actualInterval.Deleted {
@@ -88,7 +89,7 @@ func TestIntervalsToStrings(t *testing.T) {
 		End:          time.Date(2020, 11, 25, 9, 52, 53, 0, loc),
 		Tags:         []string{"test"},
 		LastModified: time.Time{},
-		Deleted:      false,
+		Deleted:      true,
 	}
 	testData[2] = storage.Interval{
 		Start:        time.Date(2020, 12, 9, 14, 5, 21, 0, loc),

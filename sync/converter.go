@@ -20,6 +20,7 @@ package sync
 import (
 	"fmt"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	"log"
 	"strings"
 	"time"
 )
@@ -33,7 +34,6 @@ const timeLayout = "20060102T150405Z"
 func StringsToIntervals(data []string) []storage.Interval {
 	now := time.Now()
 	result := make([]storage.Interval, len(data), len(data))
-
 	for i, element := range data {
 		tokens := strings.Fields(element) // tokens should be ["inc", startTime, "-", endTime] for no tags and
 		// ["inc", startTime, "-", endTime, "#", tag1, tag2, ..., tagN] for N > 0 tags
@@ -46,8 +46,16 @@ func StringsToIntervals(data []string) []storage.Interval {
 			tags = []string{}
 		}
 		result[i] = storage.Interval{}
-		result[i].Start, _ = time.Parse(timeLayout, startString) // time.Parse uses UTC as default
-		result[i].End, _ = time.Parse(timeLayout, endString)
+		startTime, err := time.Parse(timeLayout, startString) // time.Parse uses UTC as default
+		if err != nil {
+			log.Printf("Error parsing start time of interval %v", element)
+		}
+		result[i].Start = startTime
+		endTime, err := time.Parse(timeLayout, endString)
+		if err != nil {
+			log.Printf("Error parsing end time of interval %v", element)
+		}
+		result[i].End = endTime
 		result[i].Tags = make([]string, len(tags), len(tags))
 		copy(result[i].Tags, tags)
 		result[i].LastModified = now
@@ -57,15 +65,16 @@ func StringsToIntervals(data []string) []storage.Interval {
 }
 
 // IntervalsToStrings converts a slice of Interval structs to a slice of the corresponding timewarrior interval strings
-// Care: the LastModified information is not contained in the string representation
+// Important: the LastModified information is not contained in the string representation
 func IntervalsToStrings(intervals []storage.Interval) []string {
 	result := make([]string, len(intervals), len(intervals))
 
 	for i, element := range intervals {
-		result[i] = fmt.Sprintf("inc %v - %v", element.Start.Format(timeLayout), element.End.Format(timeLayout))
+		intervalTime := fmt.Sprintf("inc %v - %v", element.Start.Format(timeLayout), element.End.Format(timeLayout))
 		if len(element.Tags) > 0 {
-			result[i] = result[i] + fmt.Sprintf(" # %v", strings.Join(element.Tags, " "))
+			intervalTime = fmt.Sprintf("%v # %v", intervalTime, strings.Join(element.Tags, " "))
 		}
+		result[i] = intervalTime
 	}
 	return result
 }

@@ -35,10 +35,9 @@ type ClientId int
 // The Tags filed represents the intervals tags as a slice of string. If there are no tags associated with this
 // particular interval, tags should be a slice of length 0
 type Interval struct {
-	Start time.Time
-	End   time.Time
-	Tags  []string
-
+	Start        time.Time
+	End          time.Time
+	Tags         []string
 	LastModified time.Time
 	Deleted      bool
 }
