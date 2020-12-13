@@ -32,10 +32,12 @@ type ClientId int
 
 // An Interval represents a time from Start to End.
 // It also contains LastModified timestamp and Deleted flag needed for synchronization
+// The Tags field represents the intervals tags as a slice of string. If there are no tags associated with this
+// particular interval, tags should be a slice of length 0
 type Interval struct {
-	Start time.Time
-	End   time.Time
-
+	Start        time.Time
+	End          time.Time
+	Tags         []string
 	LastModified time.Time
 	Deleted      bool
 }
