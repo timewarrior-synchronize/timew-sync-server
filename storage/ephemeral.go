@@ -22,16 +22,16 @@ package storage
 // Each interval is represented as a string in intervals.
 // Data is not stored persistently.
 type EphemeralStorage struct {
-	intervals []string
+	intervals []IntervalWithMetadata
 }
 
 // GetIntervals
 // getter for intervals field of EphemeralStorage struct
-func (es EphemeralStorage) GetIntervals() []string {
+func (es EphemeralStorage) GetIntervals() []IntervalWithMetadata {
 	return es.intervals
 }
 
 // OverwriteIntervals sets intervals field of given EphemeralStorage struct
-func (es *EphemeralStorage) OverwriteIntervals(intervals []string) {
+func (es *EphemeralStorage) OverwriteIntervals(intervals []IntervalWithMetadata) {
 	es.intervals = intervals
 }

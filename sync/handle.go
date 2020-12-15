@@ -18,6 +18,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package sync
 
 import (
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"io"
 	"io/ioutil"
 	"log"
@@ -32,13 +33,13 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
 		log.Printf("Error reading sync request. Ignoring request.")
 		return
 	}
-	requestData, parseError := ParseSyncRequest(string(requestBody))
+	requestData, parseError := data.ParseSyncRequest(string(requestBody))
 	if parseError != nil {
 		log.Printf("Error parsing sync request. Ignoring request.")
 		return
 	}
 	syncData := Sync(requestData)
-	responseBody, respError := ToJSON(syncData)
+	responseBody, respError := data.ToJSON(syncData)
 	if respError != nil {
 		log.Printf("Error creating response JSON. Ignoring request.")
 		return

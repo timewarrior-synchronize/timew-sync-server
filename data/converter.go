@@ -15,11 +15,10 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package sync
+package data
 
 import (
 	"fmt"
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
 	"log"
 	"strings"
 	"time"
@@ -31,9 +30,8 @@ const timeLayout = "20060102T150405Z"
 // StringsToIntervals converts a slice of strings (each string encoding one time interval) to a slice of the
 // corresponding interval structs
 // The LastModified timestamps are initialized to time.Now()
-func StringsToIntervals(data []string) []storage.Interval {
-	now := time.Now()
-	result := make([]storage.Interval, len(data), len(data))
+func StringsToIntervals(data []string) []Interval {
+	result := make([]Interval, len(data), len(data))
 	for i, element := range data {
 		tokens := strings.Fields(element) // tokens should be ["inc", startTime, "-", endTime] for no tags and
 		// ["inc", startTime, "-", endTime, "#", tag1, tag2, ..., tagN] for N > 0 tags
@@ -45,7 +43,7 @@ func StringsToIntervals(data []string) []storage.Interval {
 		} else { // initialize to empty slice else
 			tags = []string{}
 		}
-		result[i] = storage.Interval{}
+		result[i] = Interval{}
 		startTime, err := time.Parse(timeLayout, startString) // time.Parse uses UTC as default
 		if err != nil {
 			log.Printf("Error parsing start time of interval %v", element)
@@ -58,15 +56,14 @@ func StringsToIntervals(data []string) []storage.Interval {
 		result[i].End = endTime
 		result[i].Tags = make([]string, len(tags), len(tags))
 		copy(result[i].Tags, tags)
-		result[i].LastModified = now
-		result[i].Deleted = false
 	}
+
 	return result
 }
 
 // IntervalsToStrings converts a slice of Interval structs to a slice of the corresponding timewarrior interval strings
 // Important: the LastModified information is not contained in the string representation
-func IntervalsToStrings(intervals []storage.Interval) []string {
+func IntervalsToStrings(intervals []Interval) []string {
 	result := make([]string, len(intervals), len(intervals))
 
 	for i, element := range intervals {

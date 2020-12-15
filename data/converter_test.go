@@ -15,10 +15,9 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package sync
+package data
 
 import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
 	"github.com/google/go-cmp/cmp"
 	"reflect"
 	"testing"
@@ -32,27 +31,21 @@ func TestStringsToIntervals(t *testing.T) {
 		"inc 20201209T140521Z - 20201209T140533Z # a b c",
 	}
 	loc, _ := time.LoadLocation("UTC")
-	expected := make([]storage.Interval, 3, 3)
-	expected[0] = storage.Interval{
+	expected := make([]Interval, 3, 3)
+	expected[0] = Interval{
 		Start:        time.Date(2020, 11, 25, 9, 39, 10, 0, loc),
 		End:          time.Date(2020, 11, 25, 9, 39, 43, 0, loc),
 		Tags:         []string{},
-		LastModified: time.Time{},
-		Deleted:      false,
 	}
-	expected[1] = storage.Interval{
+	expected[1] = Interval{
 		Start:        time.Date(2020, 11, 25, 9, 52, 40, 0, loc),
 		End:          time.Date(2020, 11, 25, 9, 52, 53, 0, loc),
 		Tags:         []string{"test"},
-		LastModified: time.Time{},
-		Deleted:      false,
 	}
-	expected[2] = storage.Interval{
+	expected[2] = Interval{
 		Start:        time.Date(2020, 12, 9, 14, 5, 21, 0, loc),
 		End:          time.Date(2020, 12, 9, 14, 5, 33, 0, loc),
 		Tags:         []string{"a", "b", "c"},
-		LastModified: time.Time{},
-		Deleted:      false,
 	}
 	actual := StringsToIntervals(testData)
 	if len(actual) != 3 {
@@ -68,35 +61,26 @@ func TestStringsToIntervals(t *testing.T) {
 		if !cmp.Equal(actualInterval.Tags, expected[i].Tags) {
 			t.Errorf("wrong tags for interval %v: expected %v of type %v got %v of type %v", i, expected[i].Tags, reflect.TypeOf(expected[i].Tags), actualInterval.Tags, reflect.TypeOf(actualInterval.Tags))
 		}
-		if actualInterval.Deleted {
-			t.Errorf("wrong value of deleted flag for interval %v: expected false got %v", i, actualInterval.Deleted)
-		}
 	}
 }
 
 func TestIntervalsToStrings(t *testing.T) {
 	loc, _ := time.LoadLocation("UTC")
-	testData := make([]storage.Interval, 3, 3)
-	testData[0] = storage.Interval{
+	testData := make([]Interval, 3, 3)
+	testData[0] = Interval{
 		Start:        time.Date(2020, 11, 25, 9, 39, 10, 0, loc),
 		End:          time.Date(2020, 11, 25, 9, 39, 43, 0, loc),
 		Tags:         []string{},
-		LastModified: time.Time{},
-		Deleted:      false,
 	}
-	testData[1] = storage.Interval{
+	testData[1] = Interval{
 		Start:        time.Date(2020, 11, 25, 9, 52, 40, 0, loc),
 		End:          time.Date(2020, 11, 25, 9, 52, 53, 0, loc),
 		Tags:         []string{"test"},
-		LastModified: time.Time{},
-		Deleted:      true,
 	}
-	testData[2] = storage.Interval{
+	testData[2] = Interval{
 		Start:        time.Date(2020, 12, 9, 14, 5, 21, 0, loc),
 		End:          time.Date(2020, 12, 9, 14, 5, 33, 0, loc),
 		Tags:         []string{"a", "b", "c"},
-		LastModified: time.Time{},
-		Deleted:      false,
 	}
 
 	expected := []string{
