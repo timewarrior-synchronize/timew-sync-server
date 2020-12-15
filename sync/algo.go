@@ -18,11 +18,32 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package sync
 
 import (
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	"time"
 )
 
-// Placeholder function for Sync
-func Sync(data RequestData) []string {
-	storage.GlobalStorage.OverwriteIntervals(data.IntervalData)
-	return storage.GlobalStorage.GetIntervals()
+// Sync completely overrides the Storage with the new data and returns all stored intervals afterwards.
+// This is a naive approach for testing and not the final sync algorithm.
+func Sync(syncRequest data.SyncRequest) []data.Interval {
+	intervalsWithMetadata := make([]storage.IntervalWithMetadata, len(syncRequest.Intervals))
+
+	for i, interval := range syncRequest.Intervals {
+		intervalsWithMetadata[i] = storage.IntervalWithMetadata{
+			Interval:     interval,
+			LastModified: time.Now(),
+			Deleted:      false,
+		}
+	}
+	
+	storage.GlobalStorage.OverwriteIntervals(intervalsWithMetadata)
+	intervalsWithMetadata = storage.GlobalStorage.GetIntervals()
+
+	syncedIntervals := make([]data.Interval, len(intervalsWithMetadata))
+
+	for i, intervalWithMetadata := range intervalsWithMetadata {
+		syncedIntervals[i] = intervalWithMetadata.Interval
+	}
+
+	return syncedIntervals
 }

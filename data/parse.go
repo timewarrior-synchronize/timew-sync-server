@@ -15,27 +15,44 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package sync
+package data
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
-// RequestData represents a sync request.
-// It contains the unique client and user id's who are syncing
-// and all their tracked intervals.
-type RequestData struct {
+// JSONRequest represents the JSON structure of a sync request.
+// It contains the unique client and user ids who are syncing
+// and all their tracked intervals as strings.
+// It is (and should) only be used for JSON parsing.
+type JSONRequest struct {
 	UserId       int      `json:"userID"`
 	ClientId     int      `json:"clientId"`
 	IntervalData []string `json:"intervalData"`
 }
 
+// SyncRequest represents a sync request.
+// It contains the id of the user and client, who are syncing
+// and the intervals tracked on the client.
+type SyncRequest struct {
+	UserId int
+	ClientId int
+	Intervals []Interval
+}
+
 // ParseSyncRequest parses the JSON of a sync request into a
-// RequestData struct.
-func ParseSyncRequest(jsonInput string) (RequestData, error) {
-	var requestData RequestData
+// JSONRequest struct.
+func ParseSyncRequest(jsonInput string) (SyncRequest, error) {
+	var requestData JSONRequest
 
 	err := json.Unmarshal([]byte(jsonInput), &requestData)
+	syncRequest := SyncRequest{
+		UserId:    requestData.UserId,
+		ClientId:  requestData.ClientId,
+		Intervals: StringsToIntervals(requestData.IntervalData),
+	}
 
-	return requestData, err
+	return syncRequest, err
 }
 
 // ResponseData represents a sync response
@@ -45,9 +62,9 @@ type ResponseData struct {
 }
 
 // ToJSON creates JSON for response body from interval data and returns it as string
-func ToJSON(data []string) (string, error) {
+func ToJSON(data []Interval) (string, error) {
 	var responseData ResponseData
-	responseData.IntervalData = data
+	responseData.IntervalData = IntervalsToStrings(data)
 	result, err := json.Marshal(responseData)
 	return string(result), err
 }

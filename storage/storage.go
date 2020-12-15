@@ -18,6 +18,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package storage
 
 import (
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"time"
 )
 
@@ -30,22 +31,20 @@ type UserId int
 // for a given user. A user always has at least one client.
 type ClientId int
 
-// An Interval represents a time from Start to End.
+// An IntervalWithMetadata represents a time from Start to End.
 // It also contains LastModified timestamp and Deleted flag needed for synchronization
 // The Tags field represents the intervals tags as a slice of string. If there are no tags associated with this
 // particular interval, tags should be a slice of length 0
-type Interval struct {
-	Start        time.Time
-	End          time.Time
-	Tags         []string
+type IntervalWithMetadata struct {
+	data.Interval
 	LastModified time.Time
 	Deleted      bool
 }
 
 // Storage defines an interface for accessing stored intervals.
 type Storage interface {
-	GetIntervals() []string
-	OverwriteIntervals(intervals []string)
+	GetIntervals() []IntervalWithMetadata
+	OverwriteIntervals(intervals []IntervalWithMetadata)
 }
 
 var GlobalStorage Storage
