@@ -24,6 +24,38 @@ import (
 	"time"
 )
 
+func TestParseInterval(t *testing.T) {
+	testData := "inc 20201215T225656Z - 20201215T230000Z # tag1 tag2"
+
+	expected := Interval{
+		Start: time.Date(2020, time.December, 15, 22, 56, 56, 0, time.UTC),
+		End:   time.Date(2020, time.December, 15, 23, 0, 0, 0, time.UTC),
+		Tags:  []string{"tag1", "tag2"},
+	}
+
+	result := ParseInterval(testData)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("Result differs from expected: \n%s", diff)
+	}
+}
+
+func TestInterval_Serialize(t *testing.T) {
+	testData := Interval{
+		Start: time.Date(1991, time.March, 13, 3, 45, 45, 0, time.UTC),
+		End:   time.Date(1991, time.March, 14, 7, 32, 56, 0, time.UTC),
+		Tags:  []string{"tag1", "tag2"},
+	}
+
+	expected := "inc 19910313T034545Z - 19910314T073256Z # tag1 tag2"
+
+	result := testData.Serialize()
+
+	if expected != result {
+		t.Errorf("Wrong interval format. Expected: \"%s\", got: \"%s\"", expected, result)
+	}
+}
+
 func TestStringsToIntervals(t *testing.T) {
 	testData := []string{
 		"inc 20201125T093910Z - 20201125T093943Z",
@@ -96,7 +128,7 @@ func TestIntervalsToStrings(t *testing.T) {
 
 	for i, a := range actual {
 		if a != expected[i] {
-			t.Errorf("wrong conversion for interval %v: expected \"%v\" got \"%v\"\n", i, a, expected[i])
+			t.Errorf("wrong conversion for interval %v: expected \"%v\" got \"%v\"\n", i, expected[i], a)
 		}
 	}
 

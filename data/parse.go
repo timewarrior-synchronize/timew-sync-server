@@ -19,7 +19,6 @@ package data
 
 import (
 	"encoding/json"
-	"time"
 )
 
 // JSONRequest represents the JSON structure of a sync request.
@@ -39,15 +38,6 @@ type SyncRequest struct {
 	UserId int
 	ClientId int
 	Intervals []Interval
-}
-
-// Interval represents a timewarrior interval.
-// It contains a start and end time and the tags associated
-// with the interval.
-type Interval struct {
-	Start time.Time
-	End time.Time
-	Tags []string
 }
 
 // ParseSyncRequest parses the JSON of a sync request into a
