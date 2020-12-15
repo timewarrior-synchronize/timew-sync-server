@@ -18,13 +18,28 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package main
 
 import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/sync"
+	"flag"
+	"fmt"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/sync"
 	"log"
 	"net/http"
+	"os"
 )
 
+var versionFlag bool
+var configFilePath string
+
 func main() {
+	flag.BoolVar(&versionFlag, "version", false, "Print version information")
+	flag.StringVar(&configFilePath, "config-file", "", "Path to the configuration file")
+	flag.Parse()
+
+	if versionFlag {
+		_, _ = fmt.Fprintf(os.Stderr, "timewarrior sync server version %v\n", "unreleased")
+		os.Exit(0)
+	}
+
 	storage.GlobalStorage = &storage.EphemeralStorage{}
 
 	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
