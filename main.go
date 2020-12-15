@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	if versionFlag {
-		fmt.Fprintf(os.Stderr, "timewarrior sync server version %v\n", "unreleased")
+		_, _ = fmt.Fprintf(os.Stderr, "timewarrior sync server version %v\n", "unreleased")
 		os.Exit(0)
 	}
 
