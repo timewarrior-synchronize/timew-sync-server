@@ -21,7 +21,7 @@ stages:
   - build
   - deploy
 
-format:
+test:
   stage: test
   script:
     - go fmt $(go list ./... | grep -v /vendor/)
