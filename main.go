@@ -54,5 +54,6 @@ func main() {
 
 	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
 
+	log.Printf("Listening on Port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

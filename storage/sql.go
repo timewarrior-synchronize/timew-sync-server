@@ -17,7 +17,7 @@ func (s *Sql) GetIntervals(userId UserId) ([]Interval, error) {
 	q := `
 SELECT start_time, end_time, tags, annotation
 FROM interval
-WHERE user_id == ?
+WHERE user_id == $1
 `
 	rows, err := s.DB.Query(q, userId)
 	if err != nil {
@@ -47,7 +47,7 @@ func (s *Sql) SetIntervals(userId UserId, intervals []Interval) error {
 
 	q := `
 DELETE FROM interval
-WHERE user_id = ?
+WHERE user_id = $1
 `
 	_, err = tx.ExecContext(ctx, q, userId)
 	if err != nil {
@@ -60,7 +60,7 @@ WHERE user_id = ?
 
 	q = `
 INSERT INTO interval (user_id, start_time, end_time, tags, annotation)
-VALUES (?, ?, ?, ?, ?)
+VALUES ($1, $2, $3, $4, $5)
 `
 	for _, interval := range intervals {
 		_, err = tx.ExecContext(ctx, q, userId, interval.Start, interval.End, interval.Tags, interval.Annotation)

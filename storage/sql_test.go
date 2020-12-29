@@ -51,3 +51,49 @@ WHERE user_id == ?
 		t.Errorf("Results differ from expected:\n%s", diff)
 	}
 }
+
+func TestSql_SetIntervals(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub databse connection", err)
+	}
+	defer db.Close()
+
+	testData := []Interval{
+		{
+			Start:      time.Date(2020, 12, 29, 20, 0, 0, 0, time.UTC),
+			End:        time.Date(2020, 12, 29, 23, 0, 0, 0, time.UTC),
+			Tags:       "Tag1 Tag2",
+			Annotation: "Annotation",
+		},
+		{
+			Tags:       "Tag3 Tag4",
+			Annotation: "Annotation2",
+		},
+	}
+
+	mock.ExpectBegin()
+	q := `
+DELETE FROM interval
+WHERE user_id = \$1
+`
+	mock.ExpectExec(q).WithArgs(42).WillReturnResult(sqlmock.NewResult(0, 0))
+
+	q = `
+INSERT INTO interval
+`
+	mock.ExpectExec(q).
+		WithArgs(42, testData[0].Start, testData[0].End, testData[0].Tags, testData[0].Annotation).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec(q).
+		WithArgs(42, testData[1].Start, testData[1].End, testData[1].Tags, testData[1].Annotation).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	mock.ExpectCommit()
+
+	sql := Sql{DB: db}
+	err = sql.SetIntervals(42, testData)
+	if err != nil {
+		t.Errorf("Error '%s' during SetIntervals", err)
+	}
+}
