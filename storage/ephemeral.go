@@ -30,10 +30,12 @@ type Ephemeral struct {
 	intervals map[UserId][]Interval
 }
 
+// GetIntervals returns all intervals stored for a specific user
 func (ep *Ephemeral) GetIntervals(userId UserId) ([]Interval, error) {
 	return ep.intervals[userId], nil
 }
 
+// SetIntervals replaces all intervals of a specific user
 func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) error {
 	if ep.intervals == nil {
 		ep.intervals = make(map[UserId][]Interval)
@@ -45,6 +47,7 @@ func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) error {
 	return nil
 }
 
+// AddInterval adds a single interval to the intervals stored for a user
 func (ep *Ephemeral) AddInterval(userId UserId, interval Interval) error {
 	if ep.intervals == nil {
 		ep.intervals = make(map[UserId][]Interval)
@@ -56,6 +59,7 @@ func (ep *Ephemeral) AddInterval(userId UserId, interval Interval) error {
 	return nil
 }
 
+// RemoveInterval removes an interval from the intervals stored for a user
 func (ep *Ephemeral) RemoveInterval(userId UserId, interval *Interval) error {
 	intervalIndex, err := findInterval(interval, ep.intervals[userId])
 	if err != nil {
@@ -69,6 +73,8 @@ func (ep *Ephemeral) RemoveInterval(userId UserId, interval *Interval) error {
 	return nil
 }
 
+// findInterval returns the index of an interval in a slice of intervals
+// Returns an error, if intervals doesn't contain the interval
 func findInterval(wanted *Interval, intervals []Interval) (int, error) {
 	for i, interval := range intervals {
 		if &interval == wanted {

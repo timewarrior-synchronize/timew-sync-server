@@ -11,6 +11,8 @@ type Sql struct {
 	DB *sql.DB
 }
 
+// GetIntervals returns all intervals stored for a user
+// Returns an error, if there are problems while reading the data
 func (s *Sql) GetIntervals(userId UserId) ([]Interval, error) {
 	var intervals []Interval
 
@@ -38,6 +40,8 @@ WHERE user_id == $1
 	return intervals, nil
 }
 
+// SetIntervals replaces all intervals stored for a user
+// Returns an error if an error occurs while replacing the data
 func (s *Sql) SetIntervals(userId UserId, intervals []Interval) error {
 	ctx := context.Background()
 	tx, err := s.DB.BeginTx(ctx, nil)
@@ -81,6 +85,8 @@ VALUES ($1, $2, $3, $4, $5)
 	return nil
 }
 
+// AddInterval adds a single interval to the intervals stored for a user
+// Returns an error if an error occurs while adding the interval
 func (s *Sql) AddInterval(userId UserId, interval Interval) error {
 	q := `
 INSERT INTO interval (user_id, start_time, end_time, tags, annotation)
@@ -94,6 +100,8 @@ VALUES ($1, $2, $3, $4, $5)
 	return nil
 }
 
+// RemoveInterval removes a single interval from the intervals stored for a user
+// Returns an error if an error occurs while deleting the interval
 func (s *Sql) RemoveInterval(userId UserId, interval *Interval) error {
 	q := `
 DELETE FROM interval

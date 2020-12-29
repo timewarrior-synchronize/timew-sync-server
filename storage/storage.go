@@ -44,7 +44,7 @@ type Storage interface {
 	// AddInterval adds an interval to a user's intervals
 	AddInterval(userId UserId, interval Interval) error
 
-	// RemoveInterval removes
+	// RemoveInterval removes an interval from a user's intervals
 	RemoveInterval(userId UserId, interval *Interval) error
 }
 
