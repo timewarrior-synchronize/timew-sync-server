@@ -17,34 +17,35 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 package storage
 
-import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
-)
+import "time"
 
 // A UserId represents a unique ID assigned to each user of the
 // timewarrior sync server
 type UserId int
 
 // An Interval represents a time from Start to End.
-// It also contains LastModified timestamp and Deleted flag needed for synchronization
-// The Tags field represents the intervals tags as a slice of string. If there are no tags associated with this
-// particular interval, tags should be a slice of length 0
-type Interval data.Interval
+// The Tags field represents the interval's tags as string.
+type Interval struct {
+	Start      time.Time
+	End        time.Time
+	Tags       string
+	Annotation string
+}
 
 // Storage defines an interface for accessing stored intervals.
 // Every User has a set of intervals, which can be accessed and modified independently.
 type Storage interface {
 	// GetIntervals returns all intervals associated with a user
-	GetIntervals(userId UserId) []Interval
+	GetIntervals(userId UserId) ([]Interval, error)
 
 	// SetIntervals overrides all intervals of a user
-	SetIntervals(userId UserId, intervals []Interval)
+	SetIntervals(userId UserId, intervals []Interval) error
 
 	// AddInterval adds an interval to a user's intervals
-	AddInterval(userId UserId, interval Interval)
+	AddInterval(userId UserId, interval Interval) error
 
 	// RemoveInterval removes
-	RemoveInterval(userId UserId, interval *Interval)
+	RemoveInterval(userId UserId, interval *Interval) error
 }
 
 var GlobalStorage Storage

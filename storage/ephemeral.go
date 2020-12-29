@@ -30,37 +30,43 @@ type Ephemeral struct {
 	intervals map[UserId][]Interval
 }
 
-func (ep *Ephemeral) GetIntervals(userId UserId) []Interval {
-	return ep.intervals[userId]
+func (ep *Ephemeral) GetIntervals(userId UserId) ([]Interval, error) {
+	return ep.intervals[userId], nil
 }
 
-func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) {
+func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) error {
 	if ep.intervals == nil {
 		ep.intervals = make(map[UserId][]Interval)
 	}
 
 	ep.intervals[userId] = intervals
 	log.Printf("ephemeral: Set Intervals of User %v\n", userId)
+
+	return nil
 }
 
-func (ep *Ephemeral) AddInterval(userId UserId, interval Interval) {
+func (ep *Ephemeral) AddInterval(userId UserId, interval Interval) error {
 	if ep.intervals == nil {
 		ep.intervals = make(map[UserId][]Interval)
 	}
 
 	ep.intervals[userId] = append(ep.intervals[userId], interval)
 	log.Printf("ephemeral: Added an Interval to User %v\n", userId)
+
+	return nil
 }
 
-func (ep *Ephemeral) RemoveInterval(userId UserId, interval *Interval) {
+func (ep *Ephemeral) RemoveInterval(userId UserId, interval *Interval) error {
 	intervalIndex, err := findInterval(interval, ep.intervals[userId])
 	if err != nil {
 		log.Printf("ephemeral: Couldn't find Interval to remove. Skipping")
-		return
+		return nil
 	}
 
 	ep.intervals[userId] = append(ep.intervals[userId][:intervalIndex], ep.intervals[userId][intervalIndex+1:]...)
 	log.Printf("ephemeral: Removed an Interval of User %v\n", userId)
+
+	return nil
 }
 
 func findInterval(wanted *Interval, intervals []Interval) (int, error) {

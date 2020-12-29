@@ -27,16 +27,40 @@ import (
 func Sync(syncRequest data.SyncRequest) []data.Interval {
 	intervals := make([]storage.Interval, len(syncRequest.Intervals))
 	for i, interval := range syncRequest.Intervals {
-		intervals[i] = storage.Interval(interval)
+		tags := ""
+		for _, tag := range interval.Tags {
+			tags += tag
+		}
+
+		intervals[i] = storage.Interval{
+			Start:      interval.Start,
+			End:        interval.End,
+			Tags:       tags,
+			Annotation: "",
+		}
 	}
 
-	storage.GlobalStorage.SetIntervals(0, intervals)
-	intervals = storage.GlobalStorage.GetIntervals(0)
+	err := storage.GlobalStorage.SetIntervals(0, intervals)
+	if err != nil {
+		panic("Error while writing to storage. Aborting sync process.")
+	}
+
+	intervals, err = storage.GlobalStorage.GetIntervals(0)
+	if err != nil {
+		panic("Error while reading from storage. Aborting sync process.")
+	}
 
 	syncedIntervals := make([]data.Interval, len(intervals))
 
 	for i, interval := range intervals {
-		syncedIntervals[i] = data.Interval(interval)
+		syncedIntervals[i] = data.Interval{
+			Start: interval.Start,
+			End:   interval.End,
+			// TODO: Replace with something useful, when either data.Interval is modified
+			//		or the Tag parser is rewritten
+			//		- Vincent Stollenwerk
+			Tags: []string{interval.Tags},
+		}
 	}
 
 	return syncedIntervals

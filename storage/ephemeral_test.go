@@ -31,13 +31,13 @@ func TestEphemeralStorage(t *testing.T) {
 		{
 			Start: time.Date(2020, time.December, 24, 18, 0, 0, 0, time.UTC),
 			End:   time.Date(2020, time.December, 24, 22, 0, 0, 0, time.UTC),
-			Tags:  []string{"Christmas"},
+			Tags:  "Christmas",
 		},
 		{},
 	}
 
-	s.SetIntervals(0, intervals)
-	result := s.GetIntervals(0)
+	_ = s.SetIntervals(0, intervals)
+	result, _ := s.GetIntervals(0)
 
 	if len(result) != len(intervals) {
 		t.Errorf("length doesn't match, expected %v, got %v", len(intervals), len(result))
