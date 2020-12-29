@@ -26,7 +26,7 @@ import (
 // and all their tracked intervals as strings.
 // It is (and should) only be used for JSON parsing.
 type JSONRequest struct {
-	UserId       int      `json:"userID"`
+	UserId       int      `json:"userId"`
 	ClientId     int      `json:"clientId"`
 	IntervalData []string `json:"intervalData"`
 }
@@ -35,8 +35,8 @@ type JSONRequest struct {
 // It contains the id of the user and client, who are syncing
 // and the intervals tracked on the client.
 type SyncRequest struct {
-	UserId int
-	ClientId int
+	UserId    int
+	ClientId  int
 	Intervals []Interval
 }
 
