@@ -20,6 +20,8 @@ package sync
 import (
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	"log"
+	"strings"
 )
 
 // Sync completely overrides the Storage with the new data and returns all stored intervals afterwards.
@@ -27,10 +29,7 @@ import (
 func Sync(syncRequest data.SyncRequest) []data.Interval {
 	intervals := make([]storage.Interval, len(syncRequest.Intervals))
 	for i, interval := range syncRequest.Intervals {
-		tags := ""
-		for _, tag := range interval.Tags {
-			tags += tag
-		}
+		tags := strings.Join(interval.Tags, " ")
 
 		intervals[i] = storage.Interval{
 			Start:      interval.Start,
@@ -47,7 +46,7 @@ func Sync(syncRequest data.SyncRequest) []data.Interval {
 
 	intervals, err = storage.GlobalStorage.GetIntervals(0)
 	if err != nil {
-		panic("Error while reading from storage. Aborting sync process.")
+		log.Fatalf("Error while reading from storage: %v", err)
 	}
 
 	syncedIntervals := make([]data.Interval, len(intervals))
