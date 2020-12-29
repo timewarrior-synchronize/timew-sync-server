@@ -17,8 +17,8 @@ func TestParseJSON(t *testing.T) {
 	}`
 
 	expected := SyncRequest{
-		UserId:       1,
-		ClientId:     1,
+		UserId:   1,
+		ClientId: 1,
 		Intervals: []Interval{
 			{
 				Start: time.Date(2020, time.April, 1, 12, 0, 0, 0, time.UTC),
