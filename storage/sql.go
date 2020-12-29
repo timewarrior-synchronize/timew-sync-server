@@ -82,11 +82,29 @@ VALUES ($1, $2, $3, $4, $5)
 }
 
 func (s *Sql) AddInterval(userId UserId, interval Interval) error {
-	panic("implement me")
+	q := `
+INSERT INTO interval (user_id, start_time, end_time, tags, annotation)
+VALUES ($1, $2, $3, $4, $5)
+`
+	_, err := s.DB.Exec(q, userId, interval.Start, interval.End, interval.Tags, interval.Annotation)
+	if err != nil {
+		return fmt.Errorf("sql_storage: Error while adding interval: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Sql) RemoveInterval(userId UserId, interval *Interval) error {
-	panic("implement me")
+	q := `
+DELETE FROM interval
+WHERE user_id = $1 AND start_time = $2 AND end_time = $3 AND tags = $4 AND annotation = $5
+`
+	_, err := s.DB.Exec(q, userId, interval.Start, interval.End, interval.Tags, interval.Annotation)
+	if err != nil {
+		return fmt.Errorf("sql_storage: Error while removing interval: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Sql) Setup() {

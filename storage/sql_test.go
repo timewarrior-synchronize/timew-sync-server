@@ -55,7 +55,7 @@ WHERE user_id == ?
 func TestSql_SetIntervals(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub databse connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer db.Close()
 
@@ -95,5 +95,63 @@ INSERT INTO interval
 	err = sql.SetIntervals(42, testData)
 	if err != nil {
 		t.Errorf("Error '%s' during SetIntervals", err)
+	}
+}
+
+func TestSql_AddInterval(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	testData := Interval{
+		Start:      time.Date(2003, 3, 12, 7, 20, 15, 0, time.UTC),
+		End:        time.Date(2004, 2, 4, 16, 30, 43, 0, time.UTC),
+		Tags:       "TestTag TestTag2",
+		Annotation: "TestAnnotation",
+	}
+
+	q := `
+INSERT INTO interval \(user_id, start_time, end_time, tags, annotation\)
+VALUES \(\$1, \$2, \$3, \$4, \$5\)
+`
+	mock.ExpectExec(q).
+		WithArgs(3, testData.Start, testData.End, testData.Tags, testData.Annotation).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	sql := Sql{DB: db}
+	err = sql.AddInterval(3, testData)
+	if err != nil {
+		t.Errorf("Error '%s' during AddInterval", err)
+	}
+}
+
+func TestSql_RemoveInterval(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	testData := Interval{
+		Start:      time.Date(2030, 2, 24, 14, 23, 42, 0, time.UTC),
+		End:        time.Date(2030, 2, 24, 17, 24, 0, 0, time.UTC),
+		Tags:       "Tag1 Tag2 Tag3",
+		Annotation: "Annotation",
+	}
+
+	q := `
+DELETE FROM interval
+WHERE user_id = \$1 AND start_time = \$2 AND end_time = \$3 AND tags = \$4 AND annotation = \$5
+`
+	mock.ExpectExec(q).
+		WithArgs(0, testData.Start, testData.End, testData.Tags, testData.Annotation).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	sql := Sql{DB: db}
+	err = sql.RemoveInterval(0, &testData)
+	if err != nil {
+		t.Errorf("Error '%s' during RemoveInterval", err)
 	}
 }
