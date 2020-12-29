@@ -42,9 +42,19 @@ type IntervalWithMetadata struct {
 }
 
 // Storage defines an interface for accessing stored intervals.
+// Every Client has a set of intervals, which can be accessed and modified independently.
 type Storage interface {
-	GetIntervals() []IntervalWithMetadata
-	OverwriteIntervals(intervals []IntervalWithMetadata)
+	// GetIntervals returns all intervals associated with a client
+	GetIntervals(userId UserId, clientId ClientId) []IntervalWithMetadata
+
+	// SetIntervals overrides all intervals of a client
+	SetIntervals(userId UserId, clientId ClientId, intervals []IntervalWithMetadata)
+
+	// AddInterval adds an interval to a client's intervals
+	AddInterval(userId UserId, clientId ClientId, interval IntervalWithMetadata)
+
+	// RemoveInterval removes
+	RemoveInterval(userId UserId, clientId ClientId, interval *IntervalWithMetadata)
 }
 
 var GlobalStorage Storage

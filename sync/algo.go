@@ -35,9 +35,9 @@ func Sync(syncRequest data.SyncRequest) []data.Interval {
 			Deleted:      false,
 		}
 	}
-	
-	storage.GlobalStorage.OverwriteIntervals(intervalsWithMetadata)
-	intervalsWithMetadata = storage.GlobalStorage.GetIntervals()
+
+	storage.GlobalStorage.SetIntervals(0, 0, intervalsWithMetadata)
+	intervalsWithMetadata = storage.GlobalStorage.GetIntervals(0, 0)
 
 	syncedIntervals := make([]data.Interval, len(intervalsWithMetadata))
 

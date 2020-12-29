@@ -26,11 +26,11 @@ import (
 
 func TestEphemeralStorage(t *testing.T) {
 	var s Storage
-	s = &EphemeralStorage{}
+	s = &Ephemeral{}
 
 	intervals := []IntervalWithMetadata{
 		{
-			Interval:     data.Interval{
+			Interval: data.Interval{
 				Start: time.Date(2020, time.December, 24, 18, 0, 0, 0, time.UTC),
 				End:   time.Date(2020, time.December, 24, 22, 0, 0, 0, time.UTC),
 				Tags:  []string{"Christmas"},
@@ -45,8 +45,8 @@ func TestEphemeralStorage(t *testing.T) {
 		},
 	}
 
-	s.OverwriteIntervals(intervals)
-	result := s.GetIntervals()
+	s.SetIntervals(0, 0, intervals)
+	result := s.GetIntervals(0, 0)
 
 	if len(result) != len(intervals) {
 		t.Errorf("length doesn't match, expected %v, got %v", len(intervals), len(result))

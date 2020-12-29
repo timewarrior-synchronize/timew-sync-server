@@ -40,7 +40,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	storage.GlobalStorage = &storage.EphemeralStorage{}
+	storage.GlobalStorage = &storage.Ephemeral{}
 
 	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
 
