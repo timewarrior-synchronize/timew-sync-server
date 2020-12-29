@@ -18,7 +18,6 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package storage
 
 import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
@@ -28,25 +27,17 @@ func TestEphemeralStorage(t *testing.T) {
 	var s Storage
 	s = &Ephemeral{}
 
-	intervals := []IntervalWithMetadata{
+	intervals := []Interval{
 		{
-			Interval: data.Interval{
-				Start: time.Date(2020, time.December, 24, 18, 0, 0, 0, time.UTC),
-				End:   time.Date(2020, time.December, 24, 22, 0, 0, 0, time.UTC),
-				Tags:  []string{"Christmas"},
-			},
-			LastModified: time.Date(2020, time.December, 24, 23, 0, 0, 0, time.UTC),
-			Deleted:      false,
+			Start: time.Date(2020, time.December, 24, 18, 0, 0, 0, time.UTC),
+			End:   time.Date(2020, time.December, 24, 22, 0, 0, 0, time.UTC),
+			Tags:  []string{"Christmas"},
 		},
-		{
-			Interval:     data.Interval{},
-			LastModified: time.Time{},
-			Deleted:      true,
-		},
+		{},
 	}
 
-	s.SetIntervals(0, 0, intervals)
-	result := s.GetIntervals(0, 0)
+	s.SetIntervals(0, intervals)
+	result := s.GetIntervals(0)
 
 	if len(result) != len(intervals) {
 		t.Errorf("length doesn't match, expected %v, got %v", len(intervals), len(result))

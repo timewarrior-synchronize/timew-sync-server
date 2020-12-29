@@ -27,70 +27,43 @@ import (
 // Each interval is represented as a string in intervals.
 // Data is not stored persistently.
 type Ephemeral struct {
-	intervals map[storageClient][]IntervalWithMetadata
+	intervals map[UserId][]Interval
 }
 
-// storageClient represents a client, not only with it's non unique ClientId,
-// but also with it's UserId. This makes storageClients uniquely identifiable.
-type storageClient struct {
-	userId   UserId
-	clientId ClientId
+func (ep *Ephemeral) GetIntervals(userId UserId) []Interval {
+	return ep.intervals[userId]
 }
 
-func (ep *Ephemeral) GetIntervals(userId UserId, clientId ClientId) []IntervalWithMetadata {
-	client := storageClient{
-		userId:   userId,
-		clientId: clientId,
-	}
-
-	return ep.intervals[client]
-}
-
-func (ep *Ephemeral) SetIntervals(userId UserId, clientId ClientId, intervals []IntervalWithMetadata) {
+func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) {
 	if ep.intervals == nil {
-		ep.intervals = make(map[storageClient][]IntervalWithMetadata)
+		ep.intervals = make(map[UserId][]Interval)
 	}
 
-	client := storageClient{
-		userId:   userId,
-		clientId: clientId,
-	}
-
-	ep.intervals[client] = intervals
-	log.Printf("ephemeral: Set Intervals of User, Client %v, %v\n", userId, client)
+	ep.intervals[userId] = intervals
+	log.Printf("ephemeral: Set Intervals of User %v\n", userId)
 }
 
-func (ep *Ephemeral) AddInterval(userId UserId, clientId ClientId, interval IntervalWithMetadata) {
-	client := storageClient{
-		userId:   userId,
-		clientId: clientId,
-	}
-
+func (ep *Ephemeral) AddInterval(userId UserId, interval Interval) {
 	if ep.intervals == nil {
-		ep.intervals = make(map[storageClient][]IntervalWithMetadata)
+		ep.intervals = make(map[UserId][]Interval)
 	}
 
-	ep.intervals[client] = append(ep.intervals[client], interval)
-	log.Printf("ephemeral: Added an Interval to User, Client %v, %v\n", userId, clientId)
+	ep.intervals[userId] = append(ep.intervals[userId], interval)
+	log.Printf("ephemeral: Added an Interval to User %v\n", userId)
 }
 
-func (ep *Ephemeral) RemoveInterval(userId UserId, clientId ClientId, interval *IntervalWithMetadata) {
-	client := storageClient{
-		userId:   userId,
-		clientId: clientId,
-	}
-
-	intervalIndex, err := findInterval(interval, ep.intervals[client])
+func (ep *Ephemeral) RemoveInterval(userId UserId, interval *Interval) {
+	intervalIndex, err := findInterval(interval, ep.intervals[userId])
 	if err != nil {
 		log.Printf("ephemeral: Couldn't find Interval to remove. Skipping")
 		return
 	}
 
-	ep.intervals[client] = append(ep.intervals[client][:intervalIndex], ep.intervals[client][intervalIndex+1:]...)
-	log.Printf("ephemeral: Removed an Interval of User, Client %v, %v\n", userId, clientId)
+	ep.intervals[userId] = append(ep.intervals[userId][:intervalIndex], ep.intervals[userId][intervalIndex+1:]...)
+	log.Printf("ephemeral: Removed an Interval of User %v\n", userId)
 }
 
-func findInterval(wanted *IntervalWithMetadata, intervals []IntervalWithMetadata) (int, error) {
+func findInterval(wanted *Interval, intervals []Interval) (int, error) {
 	for i, interval := range intervals {
 		if &interval == wanted {
 			return i, nil

@@ -20,29 +20,23 @@ package sync
 import (
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
-	"time"
 )
 
 // Sync completely overrides the Storage with the new data and returns all stored intervals afterwards.
 // This is a naive approach for testing and not the final sync algorithm.
 func Sync(syncRequest data.SyncRequest) []data.Interval {
-	intervalsWithMetadata := make([]storage.IntervalWithMetadata, len(syncRequest.Intervals))
-
+	intervals := make([]storage.Interval, len(syncRequest.Intervals))
 	for i, interval := range syncRequest.Intervals {
-		intervalsWithMetadata[i] = storage.IntervalWithMetadata{
-			Interval:     interval,
-			LastModified: time.Now(),
-			Deleted:      false,
-		}
+		intervals[i] = storage.Interval(interval)
 	}
 
-	storage.GlobalStorage.SetIntervals(0, 0, intervalsWithMetadata)
-	intervalsWithMetadata = storage.GlobalStorage.GetIntervals(0, 0)
+	storage.GlobalStorage.SetIntervals(0, intervals)
+	intervals = storage.GlobalStorage.GetIntervals(0)
 
-	syncedIntervals := make([]data.Interval, len(intervalsWithMetadata))
+	syncedIntervals := make([]data.Interval, len(intervals))
 
-	for i, intervalWithMetadata := range intervalsWithMetadata {
-		syncedIntervals[i] = intervalWithMetadata.Interval
+	for i, interval := range intervals {
+		syncedIntervals[i] = data.Interval(interval)
 	}
 
 	return syncedIntervals
