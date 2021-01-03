@@ -46,7 +46,8 @@ type Interval struct {
 }
 
 // Tokenize a string into components separated by
-// whitespace. Correctly handles quoted strings.
+// whitespace. Correctly handles quoted strings. Returns an error when
+// the string contains trailing whitespace.
 func Tokenize(str string) ([]string, error) {
 	var result []string
 	state := startState
