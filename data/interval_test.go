@@ -24,6 +24,57 @@ import (
 	"time"
 )
 
+func TestTokenize_String(t *testing.T) {
+	testString := "hello world   \"quoted string\"   \\ backslash \"string with \\\" inside\""
+
+	expected := []string{
+		"hello",
+		"world",
+		"\"quoted string\"",
+		"\\",
+		"backslash",
+		"\"string with \\\" inside\"",
+	}
+
+	actual, _ := Tokenize(testString)
+
+	if len(actual) != len(expected) {
+		t.Errorf("wrong number of tokens returned: expected %v got %v\n", len(expected), len(actual))
+	}
+
+	for i, a := range actual {
+		if a != expected[i] {
+			t.Errorf("wrong tokenization %v: expected \"%v\" got \"%v\"\n", i, expected[i], a)
+		}
+	}
+}
+
+func TestTokenize_Interval(t *testing.T) {
+	testString := "inc 20201215T225656Z - 20201215T230000Z # tag1 tag2"
+
+	expected := []string{
+		"inc",
+		"20201215T225656Z",
+		"-",
+		"20201215T230000Z",
+		"#",
+		"tag1",
+		"tag2",
+	}
+
+	actual, _ := Tokenize(testString)
+
+	if len(actual) != len(expected) {
+		t.Errorf("wrong number of tokens returned: expected %v got %v\n", len(expected), len(actual))
+	}
+
+	for i, a := range actual {
+		if a != expected[i] {
+			t.Errorf("wrong tokenization %v: expected \"%v\" got \"%v\"\n", i, expected[i], a)
+		}
+	}
+}
+
 func TestParseInterval(t *testing.T) {
 	testData := "inc 20201215T225656Z - 20201215T230000Z # tag1 tag2"
 
@@ -65,19 +116,19 @@ func TestStringsToIntervals(t *testing.T) {
 	loc, _ := time.LoadLocation("UTC")
 	expected := make([]Interval, 3, 3)
 	expected[0] = Interval{
-		Start:        time.Date(2020, 11, 25, 9, 39, 10, 0, loc),
-		End:          time.Date(2020, 11, 25, 9, 39, 43, 0, loc),
-		Tags:         []string{},
+		Start: time.Date(2020, 11, 25, 9, 39, 10, 0, loc),
+		End:   time.Date(2020, 11, 25, 9, 39, 43, 0, loc),
+		Tags:  []string{},
 	}
 	expected[1] = Interval{
-		Start:        time.Date(2020, 11, 25, 9, 52, 40, 0, loc),
-		End:          time.Date(2020, 11, 25, 9, 52, 53, 0, loc),
-		Tags:         []string{"test"},
+		Start: time.Date(2020, 11, 25, 9, 52, 40, 0, loc),
+		End:   time.Date(2020, 11, 25, 9, 52, 53, 0, loc),
+		Tags:  []string{"test"},
 	}
 	expected[2] = Interval{
-		Start:        time.Date(2020, 12, 9, 14, 5, 21, 0, loc),
-		End:          time.Date(2020, 12, 9, 14, 5, 33, 0, loc),
-		Tags:         []string{"a", "b", "c"},
+		Start: time.Date(2020, 12, 9, 14, 5, 21, 0, loc),
+		End:   time.Date(2020, 12, 9, 14, 5, 33, 0, loc),
+		Tags:  []string{"a", "b", "c"},
 	}
 	actual := StringsToIntervals(testData)
 	if len(actual) != 3 {
@@ -100,19 +151,19 @@ func TestIntervalsToStrings(t *testing.T) {
 	loc, _ := time.LoadLocation("UTC")
 	testData := make([]Interval, 3, 3)
 	testData[0] = Interval{
-		Start:        time.Date(2020, 11, 25, 9, 39, 10, 0, loc),
-		End:          time.Date(2020, 11, 25, 9, 39, 43, 0, loc),
-		Tags:         []string{},
+		Start: time.Date(2020, 11, 25, 9, 39, 10, 0, loc),
+		End:   time.Date(2020, 11, 25, 9, 39, 43, 0, loc),
+		Tags:  []string{},
 	}
 	testData[1] = Interval{
-		Start:        time.Date(2020, 11, 25, 9, 52, 40, 0, loc),
-		End:          time.Date(2020, 11, 25, 9, 52, 53, 0, loc),
-		Tags:         []string{"test"},
+		Start: time.Date(2020, 11, 25, 9, 52, 40, 0, loc),
+		End:   time.Date(2020, 11, 25, 9, 52, 53, 0, loc),
+		Tags:  []string{"test"},
 	}
 	testData[2] = Interval{
-		Start:        time.Date(2020, 12, 9, 14, 5, 21, 0, loc),
-		End:          time.Date(2020, 12, 9, 14, 5, 33, 0, loc),
-		Tags:         []string{"a", "b", "c"},
+		Start: time.Date(2020, 12, 9, 14, 5, 21, 0, loc),
+		End:   time.Date(2020, 12, 9, 14, 5, 33, 0, loc),
+		Tags:  []string{"a", "b", "c"},
 	}
 
 	expected := []string{

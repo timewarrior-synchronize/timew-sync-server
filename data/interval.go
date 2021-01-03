@@ -18,6 +18,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package data
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -27,13 +28,77 @@ import (
 // layout used by timewarrior. Needed for time conversion. See e.g. time.Parse
 const timeLayout = "20060102T150405Z"
 
+// Tokenizer states
+const (
+	startState = iota
+	whitespaceState
+	quoteState
+	escapeState
+)
+
 // Interval represents a timewarrior interval.
 // It contains a start and end time and the tags associated
 // with the interval.
 type Interval struct {
 	Start time.Time
-	End time.Time
-	Tags []string
+	End   time.Time
+	Tags  []string
+}
+
+// Tokenize a string into components separated by
+// whitespace. Correctly handles quoted strings. Returns an error when
+// the string contains trailing whitespace.
+func Tokenize(str string) ([]string, error) {
+	var result []string
+	state := startState
+	index := 0
+
+	for i, c := range str {
+		switch state {
+		case startState:
+			switch c {
+			case ' ':
+				result = append(result, str[index:i])
+				state = whitespaceState
+			case '"':
+				state = quoteState
+			default:
+				// skip character
+			}
+		case whitespaceState:
+			switch c {
+			case ' ':
+				// skip character
+			case '"':
+				index = i
+				state = quoteState
+			default:
+				index = i
+				state = startState
+			}
+		case quoteState:
+			switch c {
+			case '"':
+				state = startState
+			case '\\':
+				state = escapeState
+			default:
+				// skip character
+			}
+		case escapeState:
+			switch c {
+			default:
+				state = quoteState
+			}
+		}
+	}
+
+	if state != startState {
+		return nil, errors.New("Missing matching double quote")
+	} else {
+		result = append(result, str[index:])
+		return result, nil
+	}
 }
 
 // ParseInterval parses a string in timewarrior format into an Interval struct.
