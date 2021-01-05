@@ -150,7 +150,7 @@ WHERE user_id = \$1 AND start_time = \$2 AND end_time = \$3 AND tags = \$4 AND a
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	sql := Sql{DB: db}
-	err = sql.RemoveInterval(0, &testData)
+	err = sql.RemoveInterval(0, testData)
 	if err != nil {
 		t.Errorf("Error '%s' during RemoveInterval", err)
 	}

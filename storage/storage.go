@@ -45,7 +45,7 @@ type Storage interface {
 	AddInterval(userId UserId, interval Interval) error
 
 	// RemoveInterval removes an interval from a user's intervals
-	RemoveInterval(userId UserId, interval *Interval) error
+	RemoveInterval(userId UserId, interval Interval) error
 }
 
 var GlobalStorage Storage

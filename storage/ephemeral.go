@@ -73,8 +73,8 @@ func (ep *Ephemeral) AddInterval(userId UserId, interval Interval) error {
 }
 
 // RemoveInterval removes an interval from the intervals stored for a user
-func (ep *Ephemeral) RemoveInterval(userId UserId, interval *Interval) error {
-	delete(ep.intervals[userId], *interval)
+func (ep *Ephemeral) RemoveInterval(userId UserId, interval Interval) error {
+	delete(ep.intervals[userId], interval)
 	log.Printf("ephemeral: Removed an Interval of User %v\n", userId)
 
 	return nil

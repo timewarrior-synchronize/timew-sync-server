@@ -102,7 +102,7 @@ VALUES ($1, $2, $3, $4, $5)
 
 // RemoveInterval removes a single interval from the intervals stored for a user
 // Returns an error if an error occurs while deleting the interval
-func (s *Sql) RemoveInterval(userId UserId, interval *Interval) error {
+func (s *Sql) RemoveInterval(userId UserId, interval Interval) error {
 	q := `
 DELETE FROM interval
 WHERE user_id = $1 AND start_time = $2 AND end_time = $3 AND tags = $4 AND annotation = $5
