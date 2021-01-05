@@ -17,21 +17,65 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 package storage
 
-// EphemeralStorage represents storage of user interval data.
+import (
+	"log"
+)
+
+// Ephemeral represents storage of user interval data.
 // It contains the time intervals.
 // Each interval is represented as a string in intervals.
 // Data is not stored persistently.
-type EphemeralStorage struct {
-	intervals []IntervalWithMetadata
+type Ephemeral struct {
+	intervals map[UserId]intervalSet
 }
 
-// GetIntervals
-// getter for intervals field of EphemeralStorage struct
-func (es EphemeralStorage) GetIntervals() []IntervalWithMetadata {
-	return es.intervals
+// intervalSet represents a set of intervals
+type intervalSet map[Interval]bool
+
+// GetIntervals returns all intervals stored for a specific user
+func (ep *Ephemeral) GetIntervals(userId UserId) ([]Interval, error) {
+	intervals := make([]Interval, len(ep.intervals[userId]))
+
+	i := 0
+	for interval := range ep.intervals[userId] {
+		intervals[i] = interval
+		i++
+	}
+
+	return intervals, nil
 }
 
-// OverwriteIntervals sets intervals field of given EphemeralStorage struct
-func (es *EphemeralStorage) OverwriteIntervals(intervals []IntervalWithMetadata) {
-	es.intervals = intervals
+// SetIntervals replaces all intervals of a specific user
+func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) error {
+	if ep.intervals == nil {
+		ep.intervals = make(map[UserId]intervalSet)
+	}
+
+	ep.intervals[userId] = make(intervalSet, len(intervals))
+	for _, interval := range intervals {
+		ep.intervals[userId][interval] = true
+	}
+	log.Printf("ephemeral: Set Intervals of User %v\n", userId)
+
+	return nil
+}
+
+// AddInterval adds a single interval to the intervals stored for a user
+func (ep *Ephemeral) AddInterval(userId UserId, interval Interval) error {
+	if ep.intervals == nil {
+		ep.intervals = make(map[UserId]intervalSet)
+	}
+
+	ep.intervals[userId][interval] = true
+	log.Printf("ephemeral: Added an Interval to User %v\n", userId)
+
+	return nil
+}
+
+// RemoveInterval removes an interval from the intervals stored for a user
+func (ep *Ephemeral) RemoveInterval(userId UserId, interval Interval) error {
+	delete(ep.intervals[userId], interval)
+	log.Printf("ephemeral: Removed an Interval of User %v\n", userId)
+
+	return nil
 }

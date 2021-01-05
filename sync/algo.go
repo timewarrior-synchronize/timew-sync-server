@@ -20,29 +20,46 @@ package sync
 import (
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
-	"time"
+	"log"
+	"strings"
 )
 
 // Sync completely overrides the Storage with the new data and returns all stored intervals afterwards.
 // This is a naive approach for testing and not the final sync algorithm.
 func Sync(syncRequest data.SyncRequest) []data.Interval {
-	intervalsWithMetadata := make([]storage.IntervalWithMetadata, len(syncRequest.Intervals))
-
+	intervals := make([]storage.Interval, len(syncRequest.Intervals))
 	for i, interval := range syncRequest.Intervals {
-		intervalsWithMetadata[i] = storage.IntervalWithMetadata{
-			Interval:     interval,
-			LastModified: time.Now(),
-			Deleted:      false,
+		tags := strings.Join(interval.Tags, " ")
+
+		intervals[i] = storage.Interval{
+			Start:      interval.Start,
+			End:        interval.End,
+			Tags:       tags,
+			Annotation: "",
 		}
 	}
-	
-	storage.GlobalStorage.OverwriteIntervals(intervalsWithMetadata)
-	intervalsWithMetadata = storage.GlobalStorage.GetIntervals()
 
-	syncedIntervals := make([]data.Interval, len(intervalsWithMetadata))
+	err := storage.GlobalStorage.SetIntervals(0, intervals)
+	if err != nil {
+		panic("Error while writing to storage. Aborting sync process.")
+	}
 
-	for i, intervalWithMetadata := range intervalsWithMetadata {
-		syncedIntervals[i] = intervalWithMetadata.Interval
+	intervals, err = storage.GlobalStorage.GetIntervals(0)
+	if err != nil {
+		log.Fatalf("Error while reading from storage: %v", err)
+	}
+
+	syncedIntervals := make([]data.Interval, len(intervals))
+
+	for i, interval := range intervals {
+		syncedIntervals[i] = data.Interval{
+			Start: interval.Start,
+			End:   interval.End,
+			// TODO: Replace with something useful, when either data.Interval is modified
+			//		or the Tag parser is rewritten
+			//		- Vincent Stollenwerk
+			Tags: []string{interval.Tags},
+		}
 	}
 
 	return syncedIntervals

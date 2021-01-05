@@ -18,6 +18,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
@@ -25,6 +26,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var versionFlag bool
@@ -40,9 +43,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	storage.GlobalStorage = &storage.EphemeralStorage{}
+	db, err := sql.Open("sqlite3", "./db.sqlite")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	sqlStorage := &storage.Sql{DB: db}
+	sqlStorage.Setup()
+	storage.GlobalStorage = sqlStorage
 
 	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
 
+	log.Printf("Listening on Port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
