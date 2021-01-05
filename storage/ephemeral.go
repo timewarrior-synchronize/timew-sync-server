@@ -18,7 +18,6 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package storage
 
 import (
-	"errors"
 	"log"
 )
 
@@ -27,21 +26,35 @@ import (
 // Each interval is represented as a string in intervals.
 // Data is not stored persistently.
 type Ephemeral struct {
-	intervals map[UserId][]Interval
+	intervals map[UserId]intervalSet
 }
+
+// intervalSet represents a set of intervals
+type intervalSet map[Interval]bool
 
 // GetIntervals returns all intervals stored for a specific user
 func (ep *Ephemeral) GetIntervals(userId UserId) ([]Interval, error) {
-	return ep.intervals[userId], nil
+	intervals := make([]Interval, len(ep.intervals[userId]))
+
+	i := 0
+	for interval := range ep.intervals[userId] {
+		intervals[i] = interval
+		i++
+	}
+
+	return intervals, nil
 }
 
 // SetIntervals replaces all intervals of a specific user
 func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) error {
 	if ep.intervals == nil {
-		ep.intervals = make(map[UserId][]Interval)
+		ep.intervals = make(map[UserId]intervalSet)
 	}
 
-	ep.intervals[userId] = intervals
+	ep.intervals[userId] = make(intervalSet, len(intervals))
+	for _, interval := range intervals {
+		ep.intervals[userId][interval] = true
+	}
 	log.Printf("ephemeral: Set Intervals of User %v\n", userId)
 
 	return nil
@@ -50,10 +63,10 @@ func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) error {
 // AddInterval adds a single interval to the intervals stored for a user
 func (ep *Ephemeral) AddInterval(userId UserId, interval Interval) error {
 	if ep.intervals == nil {
-		ep.intervals = make(map[UserId][]Interval)
+		ep.intervals = make(map[UserId]intervalSet)
 	}
 
-	ep.intervals[userId] = append(ep.intervals[userId], interval)
+	ep.intervals[userId][interval] = true
 	log.Printf("ephemeral: Added an Interval to User %v\n", userId)
 
 	return nil
@@ -61,26 +74,8 @@ func (ep *Ephemeral) AddInterval(userId UserId, interval Interval) error {
 
 // RemoveInterval removes an interval from the intervals stored for a user
 func (ep *Ephemeral) RemoveInterval(userId UserId, interval *Interval) error {
-	intervalIndex, err := findInterval(interval, ep.intervals[userId])
-	if err != nil {
-		log.Printf("ephemeral: Couldn't find Interval to remove. Skipping")
-		return nil
-	}
-
-	ep.intervals[userId] = append(ep.intervals[userId][:intervalIndex], ep.intervals[userId][intervalIndex+1:]...)
+	delete(ep.intervals[userId], *interval)
 	log.Printf("ephemeral: Removed an Interval of User %v\n", userId)
 
 	return nil
-}
-
-// findInterval returns the index of an interval in a slice of intervals
-// Returns an error, if intervals doesn't contain the interval
-func findInterval(wanted *Interval, intervals []Interval) (int, error) {
-	for i, interval := range intervals {
-		if &interval == wanted {
-			return i, nil
-		}
-	}
-
-	return 0, errors.New("ephemeral: Couldn't find interval")
 }
