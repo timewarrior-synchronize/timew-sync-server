@@ -9,21 +9,29 @@ import (
 func TestParseJSON(t *testing.T) {
 	testInput := `
 	{
-		"userId": 1,
-		"clientId": 1,
-		"intervalData": [
-			"inc 20200401T120000Z - 20200401T153000Z # prank laugh"
+		"userID": 1,
+		"added": [
+			"inc 20200301T120000Z - 20200301T153000Z # prank add"
+		],
+		"removed": [
+			"inc 20200401T120000Z - 20200401T153000Z # prank remove"
 		]
 	}`
 
 	expected := SyncRequest{
-		UserId:   1,
-		ClientId: 1,
-		Intervals: []Interval{
+		UserID: 1,
+		Added: []Interval{
+			{
+				Start: time.Date(2020, time.March, 1, 12, 0, 0, 0, time.UTC),
+				End:   time.Date(2020, time.March, 1, 15, 30, 0, 0, time.UTC),
+				Tags:  []string{"prank", "add"},
+			},
+		},
+		Removed: []Interval{
 			{
 				Start: time.Date(2020, time.April, 1, 12, 0, 0, 0, time.UTC),
 				End:   time.Date(2020, time.April, 1, 15, 30, 0, 0, time.UTC),
-				Tags:  []string{"prank", "laugh"},
+				Tags:  []string{"prank", "remove"},
 			},
 		},
 	}
