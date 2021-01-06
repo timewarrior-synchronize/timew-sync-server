@@ -32,6 +32,11 @@ type Ephemeral struct {
 // intervalSet represents a set of intervals
 type intervalSet map[Interval]bool
 
+func (ep *Ephemeral) Initialize() error {
+	ep.intervals = make(map[UserId]intervalSet)
+	return nil
+}
+
 // GetIntervals returns all intervals stored for a specific user
 func (ep *Ephemeral) GetIntervals(userId UserId) ([]Interval, error) {
 	intervals := make([]Interval, len(ep.intervals[userId]))
@@ -47,10 +52,6 @@ func (ep *Ephemeral) GetIntervals(userId UserId) ([]Interval, error) {
 
 // SetIntervals replaces all intervals of a specific user
 func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) error {
-	if ep.intervals == nil {
-		ep.intervals = make(map[UserId]intervalSet)
-	}
-
 	ep.intervals[userId] = make(intervalSet, len(intervals))
 	for _, interval := range intervals {
 		ep.intervals[userId][interval] = true
@@ -62,10 +63,6 @@ func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) error {
 
 // AddInterval adds a single interval to the intervals stored for a user
 func (ep *Ephemeral) AddInterval(userId UserId, interval Interval) error {
-	if ep.intervals == nil {
-		ep.intervals = make(map[UserId]intervalSet)
-	}
-
 	ep.intervals[userId][interval] = true
 	log.Printf("ephemeral: Added an Interval to User %v\n", userId)
 

@@ -11,6 +11,25 @@ type Sql struct {
 	DB *sql.DB
 }
 
+func (s *Sql) Initialize() error {
+	q := `
+CREATE TABLE IF NOT EXISTS interval (
+    user_id integer NOT NULL,
+    start_time datetime NOT NULL,
+    end_time datetime NOT NULL,
+    tags text,
+    annotation text,
+    PRIMARY KEY (user_id, start_time, end_time, tags, annotation)
+);
+`
+	_, err := s.DB.Exec(q)
+	if err != nil {
+		return fmt.Errorf("Error while initializing database: %v", err)
+	}
+
+	return nil
+}
+
 // GetIntervals returns all intervals stored for a user
 // Returns an error, if there are problems while reading the data
 func (s *Sql) GetIntervals(userId UserId) ([]Interval, error) {
@@ -113,21 +132,4 @@ WHERE user_id = $1 AND start_time = $2 AND end_time = $3 AND tags = $4 AND annot
 	}
 
 	return nil
-}
-
-func (s *Sql) Setup() {
-	q := `
-CREATE TABLE IF NOT EXISTS interval (
-    user_id integer NOT NULL,
-    start_time datetime NOT NULL,
-    end_time datetime NOT NULL,
-    tags text,
-    annotation text,
-    PRIMARY KEY (user_id, start_time, end_time, tags, annotation)
-);
-`
-	_, err := s.DB.Exec(q)
-	if err != nil {
-		log.Fatalf("Error while initializing database: %v", err)
-	}
 }

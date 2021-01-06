@@ -49,7 +49,7 @@ func main() {
 	}
 	defer db.Close()
 	sqlStorage := &storage.Sql{DB: db}
-	sqlStorage.Setup()
+	sqlStorage.Initialize()
 	storage.GlobalStorage = sqlStorage
 
 	http.HandleFunc("/api/sync", sync.HandleSyncRequest)

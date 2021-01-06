@@ -35,6 +35,9 @@ type Interval struct {
 // Storage defines an interface for accessing stored intervals.
 // Every User has a set of intervals, which can be accessed and modified independently.
 type Storage interface {
+	// Initialize runs all necessary setup for this Storage instance
+	Initialize() error
+
 	// GetIntervals returns all intervals associated with a user
 	GetIntervals(userId UserId) ([]Interval, error)
 
