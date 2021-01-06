@@ -11,6 +11,7 @@ type Sql struct {
 	DB *sql.DB
 }
 
+// Initialize runs all necessary setup for this Storage instance
 func (s *Sql) Initialize() error {
 	q := `
 CREATE TABLE IF NOT EXISTS interval (
