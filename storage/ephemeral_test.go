@@ -36,6 +36,7 @@ func TestEphemeralStorage(t *testing.T) {
 		{},
 	}
 
+	_ = s.Initialize()
 	_ = s.SetIntervals(0, intervals)
 	result, _ := s.GetIntervals(0)
 
