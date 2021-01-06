@@ -38,6 +38,12 @@ type Storage interface {
 	// Initialize runs all necessary setup for this Storage instance
 	Initialize() error
 
+	// Acquire the lock for this user id
+	Lock(userId UserId)
+
+	// Release the lock for this user id
+	Unlock(userId UserId)
+
 	// GetIntervals returns all intervals associated with a user
 	GetIntervals(userId UserId) ([]Interval, error)
 

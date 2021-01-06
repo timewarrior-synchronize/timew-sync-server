@@ -8,6 +8,7 @@ import (
 )
 
 type Sql struct {
+	LockerRoom
 	DB *sql.DB
 }
 
