@@ -18,6 +18,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package storage
 
 import (
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
@@ -27,16 +28,16 @@ func TestEphemeralStorage(t *testing.T) {
 	var s Storage
 	s = &Ephemeral{}
 
-	intervals := []Interval{
+	intervals := []data.Interval{
 		{
-			Start: time.Date(2020, time.December, 24, 18, 0, 0, 0, time.UTC),
-			End:   time.Date(2020, time.December, 24, 22, 0, 0, 0, time.UTC),
-			Tags:  "Christmas",
+			Start:      time.Date(2020, time.December, 24, 18, 0, 0, 0, time.UTC),
+			End:        time.Date(2020, time.December, 24, 22, 0, 0, 0, time.UTC),
+			Tags:       []string{"Merry", "Christmas"},
+			Annotation: "test",
 		},
 		{},
 	}
 
-	_ = s.Initialize()
 	_ = s.SetIntervals(0, intervals)
 	result, _ := s.GetIntervals(0)
 

@@ -22,22 +22,21 @@ import (
 )
 
 // JSONRequest represents the JSON structure of a sync request.
-// It contains the unique client and user ids who are syncing
-// and all their tracked intervals as strings.
+// It contains the unique client id and an interval diff, stating added and removed intervals as strings.
 // It is (and should) only be used for JSON parsing.
 type JSONRequest struct {
-	UserId       int      `json:"userId"`
-	ClientId     int      `json:"clientId"`
-	IntervalData []string `json:"intervalData"`
+	UserID  int      `json:"userID"`
+	Added   []string `json:"added"`
+	Removed []string `json:"removed"`
 }
 
 // SyncRequest represents a sync request.
-// It contains the id of the user and client, who are syncing
-// and the intervals tracked on the client.
+// It contains the id of the user who is syncing
+// and its interval diff.
 type SyncRequest struct {
-	UserId    int
-	ClientId  int
-	Intervals []Interval
+	UserID  int
+	Added   []Interval
+	Removed []Interval
 }
 
 // ParseSyncRequest parses the JSON of a sync request into a
@@ -47,9 +46,9 @@ func ParseSyncRequest(jsonInput string) (SyncRequest, error) {
 
 	err := json.Unmarshal([]byte(jsonInput), &requestData)
 	syncRequest := SyncRequest{
-		UserId:    requestData.UserId,
-		ClientId:  requestData.ClientId,
-		Intervals: StringsToIntervals(requestData.IntervalData),
+		UserID:  requestData.UserID,
+		Added:   StringsToIntervals(requestData.Added),
+		Removed: StringsToIntervals(requestData.Removed),
 	}
 
 	return syncRequest, err

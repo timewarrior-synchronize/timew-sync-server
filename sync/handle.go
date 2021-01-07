@@ -19,6 +19,7 @@ package sync
 
 import (
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
 	"io"
 	"io/ioutil"
 	"log"
@@ -38,7 +39,10 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
 		log.Printf("Error parsing sync request. Ignoring request.")
 		return
 	}
-	syncData := Sync(requestData)
+	syncData, err := Sync(requestData, storage.GlobalStorage)
+	if err != nil {
+		log.Printf("syncing failed")
+	}
 	responseBody, respError := data.ToJSON(syncData)
 	if respError != nil {
 		log.Printf("Error creating response JSON. Ignoring request.")
