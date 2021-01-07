@@ -61,7 +61,6 @@ func TestSync(t *testing.T) {
 			Annotation: "x",
 		},
 	}
-	store.SetIntervals(storage.UserId(0), serverState)
 	added := []data.Interval{
 		{
 			Start:      time.Time{},
@@ -146,7 +145,8 @@ func TestSync(t *testing.T) {
 		Added:   added,
 		Removed: removed,
 	}
-
+	store.Initialize()
+	store.SetIntervals(storage.UserId(0), serverState)
 	result, err := Sync(req, &store)
 
 	if err != nil {

@@ -28,6 +28,10 @@ import (
 // Later atomicity should be guaranteed by storage.
 // Iff no errors occur Sync returns the synced interval data of the user issuing the sync request.
 func Sync(syncRequest data.SyncRequest, store storage.Storage) ([]data.Interval, error) {
+	// acquire lock and release it after syncing
+	store.Lock(storage.UserId(syncRequest.UserID))
+	defer store.Unlock(storage.UserId(syncRequest.UserID))
+
 	// First, remove all intervals the client removed in its diff
 	backup, err := store.GetIntervals(storage.UserId(syncRequest.UserID))
 	if err != nil {

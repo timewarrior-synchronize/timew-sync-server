@@ -14,45 +14,41 @@ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEM
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 package storage
 
 import (
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
-	"github.com/google/go-cmp/cmp"
-	"testing"
-	"time"
+	"sync"
 )
 
-func TestEphemeralStorage(t *testing.T) {
-	var s Storage
-	intervals := []data.Interval{
-		{
-			Start:      time.Date(2020, time.December, 24, 18, 0, 0, 0, time.UTC),
-			End:        time.Date(2020, time.December, 24, 22, 0, 0, 0, time.UTC),
-			Tags:       []string{"Merry", "Christmas"},
-			Annotation: "test",
-		},
-		{},
-	}
-	s = &Ephemeral{}
-	_ = s.Initialize()
-	_ = s.SetIntervals(0, intervals)
-	result, _ := s.GetIntervals(0)
+// A LockerRoom is a collection of Mutexes mapped to user ids
+type LockerRoom struct {
+	globalLock sync.Mutex
+	locks      map[UserId]*sync.Mutex
+}
 
-	if len(result) != len(intervals) {
-		t.Errorf("length doesn't match, expected %v, got %v", len(intervals), len(result))
-	}
+// Sets up this LockerRoom instance
+func (lr *LockerRoom) InitializeLockerRoom() {
+	lr.locks = make(map[UserId]*sync.Mutex)
+}
 
-	for _, x := range result {
-		correct := false
-		for i, _ := range intervals {
-			if diff := cmp.Diff(intervals[i], x); diff == "" {
-				correct = true
-			}
-		}
-		if !correct {
-			t.Errorf("result: %v not as expected: %v They do not contain exactly the same elements", result, intervals)
-		}
+// Creates an entry into the locks map if the user does not exist yet
+func (lr *LockerRoom) createUserIfNotExists(userId UserId) {
+	lr.globalLock.Lock()
+	defer lr.globalLock.Unlock()
+
+	if lr.locks[userId] == nil {
+		lr.locks[userId] = &sync.Mutex{}
 	}
+}
+
+// Acquire the lock for this user id
+func (lr *LockerRoom) Lock(userId UserId) {
+	lr.createUserIfNotExists(userId)
+
+	lr.locks[userId].Lock()
+}
+
+// Release the lock for this user id
+func (lr *LockerRoom) Unlock(userId UserId) {
+	lr.locks[userId].Unlock()
 }

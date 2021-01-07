@@ -27,11 +27,19 @@ import (
 // Each interval is represented as a string in intervals.
 // Data is not stored persistently.
 type Ephemeral struct {
+	LockerRoom
 	intervals map[UserId]intervalSet
 }
 
 // intervalSet represents a set of intervals
 type intervalSet map[IntervalKey]bool
+
+// Initialize runs all necessary setup for this Storage instance
+func (ep *Ephemeral) Initialize() error {
+	ep.intervals = make(map[UserId]intervalSet)
+	ep.InitializeLockerRoom()
+	return nil
+}
 
 // GetIntervals returns all intervals stored for a specific user
 func (ep *Ephemeral) GetIntervals(userId UserId) ([]data.Interval, error) {
@@ -48,9 +56,6 @@ func (ep *Ephemeral) GetIntervals(userId UserId) ([]data.Interval, error) {
 
 // SetIntervals replaces all intervals of a specific user
 func (ep *Ephemeral) SetIntervals(userId UserId, intervals []data.Interval) error {
-	if ep.intervals == nil {
-		ep.intervals = make(map[UserId]intervalSet)
-	}
 	keys := ConvertToKeys(intervals)
 	ep.intervals[userId] = make(intervalSet, len(keys))
 	for _, key := range keys {
@@ -63,10 +68,6 @@ func (ep *Ephemeral) SetIntervals(userId UserId, intervals []data.Interval) erro
 
 // AddInterval adds a single interval to the intervals stored for a user
 func (ep *Ephemeral) AddInterval(userId UserId, interval data.Interval) error {
-	if ep.intervals == nil {
-		ep.intervals = make(map[UserId]intervalSet)
-	}
-
 	ep.intervals[userId][IntervalToKey(interval)] = true
 	log.Printf("ephemeral: Added an Interval to User %v\n", userId)
 
