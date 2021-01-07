@@ -40,9 +40,10 @@ const (
 // It contains a start and end time and the tags associated
 // with the interval.
 type Interval struct {
-	Start time.Time
-	End   time.Time
-	Tags  []string
+	Start      time.Time
+	End        time.Time
+	Tags       []string
+	Annotation string
 }
 
 // Tokenize a string into components separated by

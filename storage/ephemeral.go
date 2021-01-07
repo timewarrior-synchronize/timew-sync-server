@@ -18,6 +18,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package storage
 
 import (
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"log"
 )
 
@@ -31,7 +32,7 @@ type Ephemeral struct {
 }
 
 // intervalSet represents a set of intervals
-type intervalSet map[Interval]bool
+type intervalSet map[IntervalKey]bool
 
 // Initialize runs all necessary setup for this Storage instance
 func (ep *Ephemeral) Initialize() error {
@@ -41,8 +42,8 @@ func (ep *Ephemeral) Initialize() error {
 }
 
 // GetIntervals returns all intervals stored for a specific user
-func (ep *Ephemeral) GetIntervals(userId UserId) ([]Interval, error) {
-	intervals := make([]Interval, len(ep.intervals[userId]))
+func (ep *Ephemeral) GetIntervals(userId UserId) ([]data.Interval, error) {
+	intervals := make([]IntervalKey, len(ep.intervals[userId]))
 
 	i := 0
 	for interval := range ep.intervals[userId] {
@@ -50,14 +51,15 @@ func (ep *Ephemeral) GetIntervals(userId UserId) ([]Interval, error) {
 		i++
 	}
 
-	return intervals, nil
+	return ConvertToIntervals(intervals), nil
 }
 
 // SetIntervals replaces all intervals of a specific user
-func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) error {
-	ep.intervals[userId] = make(map[Interval]bool)
-	for _, interval := range intervals {
-		ep.intervals[userId][interval] = true
+func (ep *Ephemeral) SetIntervals(userId UserId, intervals []data.Interval) error {
+	keys := ConvertToKeys(intervals)
+	ep.intervals[userId] = make(intervalSet, len(keys))
+	for _, key := range keys {
+		ep.intervals[userId][key] = true
 	}
 	log.Printf("ephemeral: Set Intervals of User %v\n", userId)
 
@@ -65,16 +67,16 @@ func (ep *Ephemeral) SetIntervals(userId UserId, intervals []Interval) error {
 }
 
 // AddInterval adds a single interval to the intervals stored for a user
-func (ep *Ephemeral) AddInterval(userId UserId, interval Interval) error {
-	ep.intervals[userId][interval] = true
+func (ep *Ephemeral) AddInterval(userId UserId, interval data.Interval) error {
+	ep.intervals[userId][IntervalToKey(interval)] = true
 	log.Printf("ephemeral: Added an Interval to User %v\n", userId)
 
 	return nil
 }
 
 // RemoveInterval removes an interval from the intervals stored for a user
-func (ep *Ephemeral) RemoveInterval(userId UserId, interval Interval) error {
-	delete(ep.intervals[userId], interval)
+func (ep *Ephemeral) RemoveInterval(userId UserId, interval data.Interval) error {
+	delete(ep.intervals[userId], IntervalToKey(interval))
 	log.Printf("ephemeral: Removed an Interval of User %v\n", userId)
 
 	return nil

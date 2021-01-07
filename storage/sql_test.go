@@ -1,6 +1,23 @@
+/*
+Copyright 2020 - Jan Bormet, Anna-Felicitas Hausmann, Joachim Schmidt, Vincent Stollenwerk, Arne Turuc
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 package storage
 
 import (
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
@@ -15,15 +32,15 @@ func TestSql_GetIntervals(t *testing.T) {
 	}
 	defer db.Close()
 
-	expected := []Interval{
+	expected := []data.Interval{
 		{
 			Start:      time.Time{},
 			End:        time.Time{},
-			Tags:       "Tag1 Tag2",
+			Tags:       []string{"Tag1", "Tag2"},
 			Annotation: "",
 		},
 		{
-			Tags:       "Tag3 Tag4",
+			Tags:       []string{"Tag3", "Tag4"},
 			Annotation: "Annotation",
 		},
 	}
@@ -38,8 +55,8 @@ WHERE user_id == ?
 		WithArgs(4).
 		WillReturnRows(
 			sqlmock.NewRows(columns).
-				AddRow(time.Time{}, time.Time{}, "Tag1 Tag2", "").
-				AddRow(time.Time{}, time.Time{}, "Tag3 Tag4", "Annotation"))
+				AddRow(time.Time{}, time.Time{}, IntervalToKey(expected[0]).Tags, "").
+				AddRow(time.Time{}, time.Time{}, IntervalToKey(expected[1]).Tags, "Annotation"))
 
 	sql := Sql{DB: db}
 	result, err := sql.GetIntervals(4)
@@ -59,15 +76,15 @@ func TestSql_SetIntervals(t *testing.T) {
 	}
 	defer db.Close()
 
-	testData := []Interval{
+	testData := []data.Interval{
 		{
 			Start:      time.Date(2020, 12, 29, 20, 0, 0, 0, time.UTC),
 			End:        time.Date(2020, 12, 29, 23, 0, 0, 0, time.UTC),
-			Tags:       "Tag1 Tag2",
+			Tags:       []string{"Tag1", "Tag2"},
 			Annotation: "Annotation",
 		},
 		{
-			Tags:       "Tag3 Tag4",
+			Tags:       []string{"Tag3", "Tag4"},
 			Annotation: "Annotation2",
 		},
 	}
@@ -83,10 +100,10 @@ WHERE user_id = \$1
 INSERT INTO interval
 `
 	mock.ExpectExec(q).
-		WithArgs(42, testData[0].Start, testData[0].End, testData[0].Tags, testData[0].Annotation).
+		WithArgs(42, testData[0].Start, testData[0].End, IntervalToKey(testData[0]).Tags, testData[0].Annotation).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec(q).
-		WithArgs(42, testData[1].Start, testData[1].End, testData[1].Tags, testData[1].Annotation).
+		WithArgs(42, testData[1].Start, testData[1].End, IntervalToKey(testData[1]).Tags, testData[1].Annotation).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	mock.ExpectCommit()
@@ -105,10 +122,10 @@ func TestSql_AddInterval(t *testing.T) {
 	}
 	defer db.Close()
 
-	testData := Interval{
+	testData := data.Interval{
 		Start:      time.Date(2003, 3, 12, 7, 20, 15, 0, time.UTC),
 		End:        time.Date(2004, 2, 4, 16, 30, 43, 0, time.UTC),
-		Tags:       "TestTag TestTag2",
+		Tags:       []string{"TestTag", "TestTag2"},
 		Annotation: "TestAnnotation",
 	}
 
@@ -117,7 +134,7 @@ INSERT INTO interval \(user_id, start_time, end_time, tags, annotation\)
 VALUES \(\$1, \$2, \$3, \$4, \$5\)
 `
 	mock.ExpectExec(q).
-		WithArgs(3, testData.Start, testData.End, testData.Tags, testData.Annotation).
+		WithArgs(3, testData.Start, testData.End, IntervalToKey(testData).Tags, testData.Annotation).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	sql := Sql{DB: db}
@@ -134,10 +151,10 @@ func TestSql_RemoveInterval(t *testing.T) {
 	}
 	defer db.Close()
 
-	testData := Interval{
+	testData := data.Interval{
 		Start:      time.Date(2030, 2, 24, 14, 23, 42, 0, time.UTC),
 		End:        time.Date(2030, 2, 24, 17, 24, 0, 0, time.UTC),
-		Tags:       "Tag1 Tag2 Tag3",
+		Tags:       []string{"Tag1", "Tag2", "Tag3"},
 		Annotation: "Annotation",
 	}
 
@@ -146,7 +163,7 @@ DELETE FROM interval
 WHERE user_id = \$1 AND start_time = \$2 AND end_time = \$3 AND tags = \$4 AND annotation = \$5
 `
 	mock.ExpectExec(q).
-		WithArgs(0, testData.Start, testData.End, testData.Tags, testData.Annotation).
+		WithArgs(0, testData.Start, testData.End, IntervalToKey(testData).Tags, testData.Annotation).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	sql := Sql{DB: db}

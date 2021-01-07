@@ -1,9 +1,26 @@
+/*
+Copyright 2020 - Jan Bormet, Anna-Felicitas Hausmann, Joachim Schmidt, Vincent Stollenwerk, Arne Turuc
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 package storage
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"log"
 )
 
@@ -26,16 +43,15 @@ CREATE TABLE IF NOT EXISTS interval (
 `
 	_, err := s.DB.Exec(q)
 	if err != nil {
-		return fmt.Errorf("Error while initializing database: %v", err)
+		log.Fatalf("Error while initializing database: %v", err)
 	}
-
 	return nil
 }
 
 // GetIntervals returns all intervals stored for a user
 // Returns an error, if there are problems while reading the data
-func (s *Sql) GetIntervals(userId UserId) ([]Interval, error) {
-	var intervals []Interval
+func (s *Sql) GetIntervals(userId UserId) ([]data.Interval, error) {
+	var intervals []IntervalKey
 
 	q := `
 SELECT start_time, end_time, tags, annotation
@@ -49,7 +65,7 @@ WHERE user_id == $1
 	defer rows.Close()
 
 	for rows.Next() {
-		interval := Interval{}
+		interval := IntervalKey{}
 		err = rows.Scan(&interval.Start, &interval.End, &interval.Tags, &interval.Annotation)
 		if err != nil {
 			return nil, fmt.Errorf("sql_storage: Error while reading database row: %w", err)
@@ -58,12 +74,12 @@ WHERE user_id == $1
 		intervals = append(intervals, interval)
 	}
 
-	return intervals, nil
+	return ConvertToIntervals(intervals), nil
 }
 
 // SetIntervals replaces all intervals stored for a user
 // Returns an error if an error occurs while replacing the data
-func (s *Sql) SetIntervals(userId UserId, intervals []Interval) error {
+func (s *Sql) SetIntervals(userId UserId, intervals []data.Interval) error {
 	ctx := context.Background()
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -87,8 +103,9 @@ WHERE user_id = $1
 INSERT INTO interval (user_id, start_time, end_time, tags, annotation)
 VALUES ($1, $2, $3, $4, $5)
 `
-	for _, interval := range intervals {
-		_, err = tx.ExecContext(ctx, q, userId, interval.Start, interval.End, interval.Tags, interval.Annotation)
+	keys := ConvertToKeys(intervals)
+	for _, key := range keys {
+		_, err = tx.ExecContext(ctx, q, userId, key.Start, key.End, key.Tags, key.Annotation)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
 				log.Printf("sql_storage: Unable to rollback: %v", rollbackErr)
@@ -108,12 +125,13 @@ VALUES ($1, $2, $3, $4, $5)
 
 // AddInterval adds a single interval to the intervals stored for a user
 // Returns an error if an error occurs while adding the interval
-func (s *Sql) AddInterval(userId UserId, interval Interval) error {
+func (s *Sql) AddInterval(userId UserId, interval data.Interval) error {
 	q := `
 INSERT INTO interval (user_id, start_time, end_time, tags, annotation)
 VALUES ($1, $2, $3, $4, $5)
 `
-	_, err := s.DB.Exec(q, userId, interval.Start, interval.End, interval.Tags, interval.Annotation)
+	key := IntervalToKey(interval)
+	_, err := s.DB.Exec(q, userId, key.Start, key.End, key.Tags, key.Annotation)
 	if err != nil {
 		return fmt.Errorf("sql_storage: Error while adding interval: %w", err)
 	}
@@ -123,12 +141,13 @@ VALUES ($1, $2, $3, $4, $5)
 
 // RemoveInterval removes a single interval from the intervals stored for a user
 // Returns an error if an error occurs while deleting the interval
-func (s *Sql) RemoveInterval(userId UserId, interval Interval) error {
+func (s *Sql) RemoveInterval(userId UserId, interval data.Interval) error {
 	q := `
 DELETE FROM interval
 WHERE user_id = $1 AND start_time = $2 AND end_time = $3 AND tags = $4 AND annotation = $5
 `
-	_, err := s.DB.Exec(q, userId, interval.Start, interval.End, interval.Tags, interval.Annotation)
+	key := IntervalToKey(interval)
+	_, err := s.DB.Exec(q, userId, key.Start, key.End, key.Tags, key.Annotation)
 	if err != nil {
 		return fmt.Errorf("sql_storage: Error while removing interval: %w", err)
 	}

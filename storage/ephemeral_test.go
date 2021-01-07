@@ -18,6 +18,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package storage
 
 import (
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
@@ -25,17 +26,16 @@ import (
 
 func TestEphemeralStorage(t *testing.T) {
 	var s Storage
-	s = &Ephemeral{}
-
-	intervals := []Interval{
+	intervals := []data.Interval{
 		{
-			Start: time.Date(2020, time.December, 24, 18, 0, 0, 0, time.UTC),
-			End:   time.Date(2020, time.December, 24, 22, 0, 0, 0, time.UTC),
-			Tags:  "Christmas",
+			Start:      time.Date(2020, time.December, 24, 18, 0, 0, 0, time.UTC),
+			End:        time.Date(2020, time.December, 24, 22, 0, 0, 0, time.UTC),
+			Tags:       []string{"Merry", "Christmas"},
+			Annotation: "test",
 		},
 		{},
 	}
-
+	s = &Ephemeral{}
 	_ = s.Initialize()
 	_ = s.SetIntervals(0, intervals)
 	result, _ := s.GetIntervals(0)
@@ -44,9 +44,15 @@ func TestEphemeralStorage(t *testing.T) {
 		t.Errorf("length doesn't match, expected %v, got %v", len(intervals), len(result))
 	}
 
-	for i, x := range result {
-		if diff := cmp.Diff(intervals[i], x); diff != "" {
-			t.Errorf("interval data does not match, expected %v, got %v", intervals[i], x)
+	for _, x := range result {
+		correct := false
+		for i, _ := range intervals {
+			if diff := cmp.Diff(intervals[i], x); diff == "" {
+				correct = true
+			}
+		}
+		if !correct {
+			t.Errorf("result: %v not as expected: %v They do not contain exactly the same elements", result, intervals)
 		}
 	}
 }

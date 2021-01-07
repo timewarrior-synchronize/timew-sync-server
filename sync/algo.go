@@ -18,49 +18,59 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package sync
 
 import (
+	"fmt"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
-	"log"
-	"strings"
 )
 
-// Sync completely overrides the Storage with the new data and returns all stored intervals afterwards.
-// This is a naive approach for testing and not the final sync algorithm.
-func Sync(syncRequest data.SyncRequest) []data.Interval {
-	intervals := make([]storage.Interval, len(syncRequest.Intervals))
-	for i, interval := range syncRequest.Intervals {
-		tags := strings.Join(interval.Tags, " ")
+// Sync updates the stored state in passed storage.Storage for the user issuing the sync request. If something fails it tries to restore the state
+// prior to the syncRequest. This is not always possible though. The error message denotes whether restoring state was successful.
+// Later atomicity should be guaranteed by storage.
+// Iff no errors occur Sync returns the synced interval data of the user issuing the sync request.
+func Sync(syncRequest data.SyncRequest, store storage.Storage) ([]data.Interval, error) {
+	// acquire lock and release it after syncing
+	store.Lock(storage.UserId(syncRequest.UserID))
+	defer store.Unlock(storage.UserId(syncRequest.UserID))
 
-		intervals[i] = storage.Interval{
-			Start:      interval.Start,
-			End:        interval.End,
-			Tags:       tags,
-			Annotation: "",
+	// First, remove all intervals the client removed in its diff
+	backup, err := store.GetIntervals(storage.UserId(syncRequest.UserID))
+	if err != nil {
+		return nil, fmt.Errorf("fatal error: Could not retrieve stored intervals for backup. Stored state did not change")
+	}
+	for _, removedInterval := range syncRequest.Removed {
+		err = store.RemoveInterval(storage.UserId(syncRequest.UserID), removedInterval)
+		if err != nil {
+			restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // trying to restore backup
+			if restoreError != nil {
+				return nil, fmt.Errorf("fatal error: Failed to remove interval %v from storage. Also could not restore server state", removedInterval)
+			} else {
+				return nil, fmt.Errorf("fatal error: Failed to remove interval %v from storage. Stored state did not change", removedInterval)
+			}
+
 		}
 	}
 
-	err := storage.GlobalStorage.SetIntervals(0, intervals)
-	if err != nil {
-		panic("Error while writing to storage. Aborting sync process.")
-	}
+	// Then add all intervals the client added in its diff
+	for _, addedInterval := range syncRequest.Added {
+		err = store.AddInterval(storage.UserId(syncRequest.UserID), addedInterval)
+		if err != nil {
+			restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // trying to restore backup
+			if restoreError != nil {
+				return nil, fmt.Errorf("fatal error: Failed to add interval %v to storage. Also could not restore server state", addedInterval)
+			} else {
+				return nil, fmt.Errorf("fatal error: Failed to add interval %v to storage. Stored state did not change", addedInterval)
+			}
 
-	intervals, err = storage.GlobalStorage.GetIntervals(0)
-	if err != nil {
-		log.Fatalf("Error while reading from storage: %v", err)
-	}
-
-	syncedIntervals := make([]data.Interval, len(intervals))
-
-	for i, interval := range intervals {
-		syncedIntervals[i] = data.Interval{
-			Start: interval.Start,
-			End:   interval.End,
-			// TODO: Replace with something useful, when either data.Interval is modified
-			//		or the Tag parser is rewritten
-			//		- Vincent Stollenwerk
-			Tags: []string{interval.Tags},
 		}
 	}
-
-	return syncedIntervals
+	result, err2 := store.GetIntervals(storage.UserId(syncRequest.UserID))
+	if err2 != nil {
+		restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // trying to restore backup
+		if restoreError != nil {
+			return nil, fmt.Errorf("fatal error: Failed to retrieve intervals from storage. Also could not restore server state")
+		} else {
+			return nil, fmt.Errorf("fatal error: Failed to retrieve intervals from storage. Stored state did not change")
+		}
+	}
+	return result, nil
 }
