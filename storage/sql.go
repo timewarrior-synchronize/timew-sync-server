@@ -31,6 +31,8 @@ type Sql struct {
 
 // Initialize runs all necessary setup for this Storage instance
 func (s *Sql) Initialize() error {
+	s.InitializeLockerRoom()
+
 	q := `
 CREATE TABLE IF NOT EXISTS interval (
     user_id integer NOT NULL,
