@@ -1,0 +1,366 @@
+/*
+Copyright 2020 - Jan Bormet, Anna-Felicitas Hausmann, Joachim Schmidt, Vincent Stollenwerk, Arne Turuc
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+package sync
+
+import (
+	"fmt"
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	"testing"
+	"time"
+)
+
+func elementwiseEqual(aSlice []data.Interval, bSlice []data.Interval) bool {
+	keyA := storage.ConvertToKeys(aSlice)
+	keyB := storage.ConvertToKeys(bSlice)
+	if len(keyA) != len(keyB) {
+		return false
+	}
+	for _, a := range keyA {
+		match := false
+		for i, b := range keyB {
+			if a == b {
+				match = true
+				keyB = append(keyB[:i], keyB[i+1:]...)
+				break
+			}
+		}
+		if !match {
+			return false
+		}
+	}
+	return true
+}
+func sliceString(s []data.Interval) {
+	print("[\n")
+	for _, i := range s {
+		fmt.Printf("\n-------------------------------------\nStart = %v\nEnd = %v\nTags = %v\nAnnotation = %v", i.Start, i.End, i.Tags, i.Annotation)
+	}
+	fmt.Printf("\n]\n\n\n")
+}
+
+func TestSolveConflict(t *testing.T) {
+	store := storage.Ephemeral{}
+	serverStateNoIntervals := []data.Interval{}
+	serverStateNoConflicts := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 13, 30, 40, 0, time.UTC), // +1h
+			Tags:       []string{"tag1", "tag2"},
+			Annotation: "a",
+		},
+		{
+			Start:      time.Date(2000, 4, 10, 13, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 4, 10, 13, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "b",
+		},
+	}
+	serverStateOverlap := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"starting"},
+			Annotation: "problemStart",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
+			Tags:       []string{"ending"},
+			Annotation: "problemEnd",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+	serverStateCongruent := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"c", "a", "b"},
+			Annotation: "problemOne",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"e", "d", "c"},
+			Annotation: "problemTwo",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+
+	serverStateSameStart := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"c", "a", "b"},
+			Annotation: "problemOne",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
+			Tags:       []string{"e", "d", "c"},
+			Annotation: "problemTwo",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+
+	serverStateSameEnd := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"c", "a", "b"},
+			Annotation: "problemOne",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"e", "d", "c"},
+			Annotation: "problemTwo",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+
+	overlapExpected := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC), // changed end time
+			Tags:       []string{"starting"},
+			Annotation: "problemStart",
+		},
+		{ // merged
+			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"ending", "problemEnd", "problemStart", "starting"},
+			Annotation: "",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC), // changed start time
+			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
+			Tags:       []string{"ending"},
+			Annotation: "problemEnd",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+
+	congruentExpected := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"a", "b", "c", "d", "e", "problemOne", "problemTwo"},
+			Annotation: "",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+
+	sameStartExpected := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"a", "b", "c", "d", "e", "problemOne", "problemTwo"},
+			Annotation: "",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
+			Tags:       []string{"e", "d", "c"},
+			Annotation: "problemTwo",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+	sameEndExpected := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			Tags:       []string{"c", "a", "b"},
+			Annotation: "problemOne",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"a", "b", "c", "d", "e", "problemOne", "problemTwo"},
+			Annotation: "",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+
+	store.Initialize()
+	store.SetIntervals(storage.UserId(0), serverStateNoIntervals)
+	store.SetIntervals(storage.UserId(1), serverStateNoConflicts)
+	store.SetIntervals(storage.UserId(2), serverStateOverlap)
+	store.SetIntervals(storage.UserId(3), serverStateCongruent)
+	store.SetIntervals(storage.UserId(4), serverStateSameStart)
+	store.SetIntervals(storage.UserId(5), serverStateSameEnd)
+
+	conflict, err := SolveConflict(0, &store)
+	if err != nil {
+		t.Errorf("NoIntervals: Solve failed with error %v", err)
+	}
+	if conflict {
+		t.Errorf("NoIntervals: Solve falsely detected a conflict")
+	}
+	result, _ := store.GetIntervals(storage.UserId(0))
+	if !elementwiseEqual(serverStateNoIntervals, result) {
+		t.Errorf("NoIntervals: State after solve wrong. Expected %v got %v", serverStateNoIntervals, result)
+	}
+
+	conflict, err = SolveConflict(1, &store)
+	if err != nil {
+		t.Errorf("NoConflicts: Solve failed with error %v", err)
+	}
+	if conflict {
+		t.Errorf("NoConflicts: Solve falsely detected a conflict")
+	}
+	result, _ = store.GetIntervals(storage.UserId(1))
+	if !elementwiseEqual(serverStateNoConflicts, result) {
+		t.Errorf("NoConflicts: State after solve wrong. Expected %v got %v", serverStateNoIntervals, result)
+	}
+
+	conflict, err = SolveConflict(2, &store)
+	if err != nil {
+		t.Errorf("Overlap: Solve failed with error %v", err)
+	}
+	if !conflict {
+		t.Errorf("Overlap: Solve did not detected a conflict")
+	}
+	result, _ = store.GetIntervals(storage.UserId(2))
+	if !elementwiseEqual(overlapExpected, result) {
+		t.Errorf("Overlap: State after solve wrong. Expected %v got %v", overlapExpected, result)
+	}
+
+	conflict, err = SolveConflict(3, &store)
+	if err != nil {
+		t.Errorf("Congruent: Solve failed with error %v", err)
+	}
+	if !conflict {
+		t.Errorf("Congruent: Solve did not detected a conflict")
+	}
+	result, _ = store.GetIntervals(storage.UserId(3))
+	if !elementwiseEqual(congruentExpected, result) {
+		t.Errorf("Congruent: State after solve wrong. Expected %v got %v", congruentExpected, result)
+	}
+
+	conflict, err = SolveConflict(4, &store)
+	if err != nil {
+		t.Errorf("SameStart: Solve failed with error %v", err)
+	}
+	if !conflict {
+		t.Errorf("SameStart: Solve did not detected a conflict")
+	}
+	result, _ = store.GetIntervals(storage.UserId(4))
+	if !elementwiseEqual(sameStartExpected, result) {
+		t.Errorf("SameStart: State after solve wrong. Expected %v got %v", sameStartExpected, result)
+	}
+
+	conflict, err = SolveConflict(5, &store)
+	if err != nil {
+		t.Errorf("SameEnd: Solve failed with error %v", err)
+	}
+	if !conflict {
+		t.Errorf("SameEnd: Solve did not detected a conflict")
+	}
+	result, _ = store.GetIntervals(storage.UserId(5))
+	if !elementwiseEqual(sameEndExpected, result) {
+		t.Errorf("SameEnd: State after solve wrong. Expected %v got %v", sameEndExpected, result)
+	}
+}
