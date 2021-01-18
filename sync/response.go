@@ -18,25 +18,20 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package sync
 
 import (
-	"net/http"
-	"net/http/httptest"
-	"testing"
+	"encoding/json"
 )
 
-func TestSendResponse(t *testing.T) {
-	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	rr := httptest.NewRecorder()
-	sendResponse(rr, http.StatusOK, "test")
-	// Check the status code is what we expect.
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
-	}
+// An ErrorResponseBody represents a JSON message that is sent to the
+// client when an error occurs
+type ErrorResponseBody struct {
+	Message string `json:"message"`
+	Details string `json:"details"`
+}
 
-	// Check the response body is what we expect.
-	expected := `test`
-	if rr.Body.String() != expected {
-		t.Errorf("handler returned unexpected body: got %v want %v",
-			rr.Body.String(), expected)
-	}
+// Returns a string representation of this error reponse which will be
+// sent to the client
+func (e ErrorResponseBody) ToString() string {
+	// Assume that JSON marshalling always is successful
+	result, _ := json.Marshal(e)
+	return string(result)
 }

@@ -47,11 +47,15 @@ func main() {
 
 	db, err := sql.Open("sqlite3", "./db.sqlite")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error while opening SQLite database: %v", err)
 	}
 	defer db.Close()
 	sqlStorage := &storage.Sql{DB: db}
-	sqlStorage.Initialize()
+
+	err = sqlStorage.Initialize()
+	if err != nil {
+		log.Fatalf("Error while initializing database: %v", err)
+	}
 	storage.GlobalStorage = sqlStorage
 
 	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
