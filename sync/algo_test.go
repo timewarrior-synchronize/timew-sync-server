@@ -147,7 +147,7 @@ func TestSync(t *testing.T) {
 	}
 	store.Initialize()
 	store.SetIntervals(storage.UserId(0), serverState)
-	result, err := Sync(req, &store)
+	result, _, err := Sync(req, &store)
 
 	if err != nil {
 		t.Errorf("Sync failed with error %v", err)
