@@ -32,10 +32,12 @@ import (
 
 var versionFlag bool
 var configFilePath string
+var portNumber int
 
 func main() {
 	flag.BoolVar(&versionFlag, "version", false, "Print version information")
 	flag.StringVar(&configFilePath, "config-file", "", "Path to the configuration file")
+	flag.IntVar(&portNumber, "port", 8080, "Port on which the server will listen for connections")
 	flag.Parse()
 
 	if versionFlag {
@@ -54,6 +56,6 @@ func main() {
 
 	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
 
-	log.Printf("Listening on Port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("Listening on Port %v", portNumber)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", portNumber), nil))
 }
