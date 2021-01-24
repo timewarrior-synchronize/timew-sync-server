@@ -30,44 +30,64 @@ import (
 func SolveConflict(userId int, store storage.Storage) (bool, error) {
 	conflictDetected := false
 	intervals, err := store.GetIntervals(storage.UserId(userId))
+
 	var removed []data.Interval
 	var added []data.Interval
 	if err != nil {
 		return false, fmt.Errorf("Unable to retrieve User Data for UserId %v from Storage:\n%v", userId, err)
 	}
+
 	// Sort intervals by ascending start time (in place)
 	sort.SliceStable(intervals, func(i, j int) bool {
 		return intervals[i].Start.Before(intervals[j].Start)
 	})
-	fmt.Printf("\n UserId: %v   len: %v\n", userId, len(intervals))
+
 	if len(intervals) == 0 {
 		return false, nil
 	}
+
 	openInterval := intervals[0]
 	var nextInterval data.Interval
-	intervals = intervals[1:]
+	intervals = intervals[1:] // treat as interval queue sorted by start time
 	var addedThisIteration []data.Interval
+
 	// loop invariant:
 	// openInterval.Start <= intervals[i].Start for all 0 <= i < len(intervals)
 	// and intervals[i].Start <= intervals[i+1].Start for all 0 <= i < len(intervals) - 1
 	// in short: append([]data.Interval{openInterval}, intervals) is always sorted by start time
 	for len(intervals) > 0 {
-		//fmt.Printf("Loop len: %v\n", len(intervals))
-		fmt.Printf("\n UserId: %v   len: %v\n", userId, len(intervals))
-		fmt.Printf("open: %v\n\nintervals: %v\n\n", openInterval, intervals)
+		// pop first interval in queue
 		interval := intervals[0]
 		intervals = intervals[1:]
+
 		addedThisIteration = []data.Interval{}
-		if interval.Start.Equal(openInterval.End) || interval.Start.After(openInterval.End) { // standard case - no overlapping intervals
+
+		if interval.Start.Equal(openInterval.End) || interval.Start.After(openInterval.End) { // standard case - no conflict
 			openInterval = interval
 		} else {
+			// If two intervals (in this case openInterval and interval) are in conflict, both intervals are removed and
+			// one to three new intervals are created.
+			//
+			// The "middle" interval is always created, e.g. an interval with the last start time and first end time of
+			// the two conflicting intervals. If both conflicting intervals have equal start start times and equal end
+			// times, only this middle interval is created.
+			//
+			// The "end" interval is created iff both conflicting intervals do not share the same end time. It starts
+			// with the earlier end time and ends with the later end time of the conflicting intervals.
+			//
+			// The "start" interval is created iff both conflicting intervals do not share the same start time. It
+			// starts with the earlier start time and ends with the later start time of the conflicting intervals.
+			//
+			// The Tags and Annotation fields of the created intervals are:
+			//	(1) just the Tags and Annotation fields of the interval, that includes the timespan of the created
+			//		created interval (iff only one such interval exists)
+			//	(2) the merged Tags and Annotation of both intervals as specified in uniteTagsAndAnnotation else
 			conflictDetected = true
 			removed = append(removed, openInterval, interval)
-			fmt.Print("New Intervals: \n")
+
 			// end section (if exists)
 			if !openInterval.End.Equal(interval.End) {
 				if openInterval.End.After(interval.End) {
-
 					nextInterval = data.Interval{
 						Start:      interval.End,
 						End:        openInterval.End,
@@ -82,7 +102,6 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 						Annotation: interval.Annotation,
 					}
 				}
-				fmt.Printf("End: %v\n", nextInterval)
 				addedThisIteration = append(addedThisIteration, nextInterval)
 			}
 
@@ -96,7 +115,6 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 					Tags:       tags,
 					Annotation: annotation,
 				}
-
 			} else {
 				nextInterval = data.Interval{
 					Start:      interval.Start,
@@ -105,7 +123,6 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 					Annotation: annotation,
 				}
 			}
-			fmt.Printf("Middle: %v\n", nextInterval)
 			addedThisIteration = append(addedThisIteration, nextInterval)
 
 			// start section
@@ -117,12 +134,12 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 					Annotation: openInterval.Annotation,
 				}
 				addedThisIteration = append(addedThisIteration, nextInterval)
-				fmt.Printf("Start: %v\n", nextInterval)
 			}
 
 			//getting ready for next iteration
 			openInterval = nextInterval
 			added = append(added, addedThisIteration...)
+
 			// reinsert newly created intervals
 			intervals = append(intervals, addedThisIteration[:len(addedThisIteration)-1]...)
 			sort.SliceStable(intervals, func(i, j int) bool {
@@ -130,11 +147,9 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 			}) // Maybe just iterating from left to right over intervals and inserting at the correct time is faster,
 			// since intervals from addedThisIteration will probably have an "early" start time
 		}
-
-		fmt.Print(" -------------------------------------------\n\n")
 	}
-	store.Lock(storage.UserId(userId))
-	defer store.Unlock(storage.UserId(userId))
+
+	// Transfer solved conflict state to storage
 	for _, a := range added {
 		err = store.AddInterval(storage.UserId(userId), a)
 		if err != nil {
@@ -153,7 +168,7 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 
 // uniteTagsAndAnnotation computes the new tags and annotation for overlapping intervals and returns tags, annotation.
 // Case 1: Iff only one interval has an Annotation, we use this annotation. Case 2: Iff no interval has an annotation,
-// we use "" as annotation. Case 3: Iff both intervals have different annotatio, we use "" as annotation, and add both
+// we use "" as annotation. Case 3: Iff both intervals have different annotation, we use "" as annotation, and add both
 // annotation to tags. Case 4: Iff both intervals have the same annotation, we just use that annotation
 // As tags we return the alphabetically sorted union of both intervals' tags (and both annotations in Case 3)
 // without duplicates.

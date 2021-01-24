@@ -53,24 +53,9 @@ func sliceString(s []data.Interval) {
 	fmt.Printf("\n]\n\n\n")
 }
 
-func TestSolveConflict(t *testing.T) {
+func TestSolveConflict_InnerInterval(t *testing.T) {
 	store := storage.Ephemeral{}
-	serverStateNoIntervals := []data.Interval{}
-	serverStateNoConflicts := []data.Interval{
-		{
-			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 10, 13, 30, 40, 0, time.UTC), // +1h
-			Tags:       []string{"tag1", "tag2"},
-			Annotation: "a",
-		},
-		{
-			Start:      time.Date(2000, 4, 10, 13, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 4, 10, 13, 30, 40, 0, time.UTC),
-			Tags:       []string{"tag1"},
-			Annotation: "b",
-		},
-	}
-	serverStateOverlap := []data.Interval{
+	serverInnerInterval := []data.Interval{
 		{
 			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
 			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
@@ -79,15 +64,15 @@ func TestSolveConflict(t *testing.T) {
 		},
 		{
 			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
-			Tags:       []string{"starting"},
-			Annotation: "problemStart",
+			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
+			Tags:       []string{"outer"},
+			Annotation: "o",
 		},
 		{
 			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
-			Tags:       []string{"ending"},
-			Annotation: "problemEnd",
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"inner"},
+			Annotation: "i",
 		},
 		{
 			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
@@ -96,7 +81,58 @@ func TestSolveConflict(t *testing.T) {
 			Annotation: "all normal here",
 		},
 	}
-	serverStateCongruent := []data.Interval{
+
+	innerIntervalExpected := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC), // changed end time
+			Tags:       []string{"outer"},
+			Annotation: "o",
+		},
+		{ // merged
+			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"i", "inner", "o", "outer"},
+			Annotation: "",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC), // changed start time
+			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
+			Tags:       []string{"outer"},
+			Annotation: "o",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+	store.Initialize()
+	store.SetIntervals(storage.UserId(0), serverInnerInterval)
+
+	conflict, err := SolveConflict(0, &store)
+	if err != nil {
+		t.Errorf("InnerInterval: Solve failed with error %v", err)
+	}
+	if !conflict {
+		t.Errorf("InnerInterval: Solve did not detected a conflict")
+	}
+	result, _ := store.GetIntervals(storage.UserId(0))
+	if !elementwiseEqual(innerIntervalExpected, result) {
+		t.Errorf("InnerInterval: State after solve wrong. Expected %v got %v", innerIntervalExpected, result)
+	}
+}
+
+func TestSolveConflict_SameEnd(t *testing.T) {
+	store := storage.Ephemeral{}
+	serverStateSameEnd := []data.Interval{
 		{
 			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
 			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
@@ -110,7 +146,7 @@ func TestSolveConflict(t *testing.T) {
 			Annotation: "problemOne",
 		},
 		{
-			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
 			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
 			Tags:       []string{"e", "d", "c"},
 			Annotation: "problemTwo",
@@ -123,6 +159,50 @@ func TestSolveConflict(t *testing.T) {
 		},
 	}
 
+	sameEndExpected := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			Tags:       []string{"c", "a", "b"},
+			Annotation: "problemOne",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"a", "b", "c", "d", "e", "problemOne", "problemTwo"},
+			Annotation: "",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+	store.Initialize()
+	store.SetIntervals(storage.UserId(0), serverStateSameEnd)
+
+	conflict, err := SolveConflict(0, &store)
+	if err != nil {
+		t.Errorf("SameEnd: Solve failed with error %v", err)
+	}
+	if !conflict {
+		t.Errorf("SameEnd: Solve did not detected a conflict")
+	}
+	result, _ := store.GetIntervals(storage.UserId(0))
+	if !elementwiseEqual(sameEndExpected, result) {
+		t.Errorf("SameEnd: State after solve wrong. Expected %v got %v", sameEndExpected, result)
+	}
+}
+
+func TestSolveConflict_SameStart(t *testing.T) {
+	store := storage.Ephemeral{}
 	serverStateSameStart := []data.Interval{
 		{
 			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
@@ -150,7 +230,51 @@ func TestSolveConflict(t *testing.T) {
 		},
 	}
 
-	serverStateSameEnd := []data.Interval{
+	sameStartExpected := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"a", "b", "c", "d", "e", "problemOne", "problemTwo"},
+			Annotation: "",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
+			Tags:       []string{"e", "d", "c"},
+			Annotation: "problemTwo",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+	store.Initialize()
+	store.SetIntervals(storage.UserId(0), serverStateSameStart)
+
+	conflict, err := SolveConflict(0, &store)
+	if err != nil {
+		t.Errorf("SameStart: Solve failed with error %v", err)
+	}
+	if !conflict {
+		t.Errorf("SameStart: Solve did not detected a conflict")
+	}
+	result, _ := store.GetIntervals(storage.UserId(0))
+	if !elementwiseEqual(sameStartExpected, result) {
+		t.Errorf("SameStart: State after solve wrong. Expected %v got %v", sameStartExpected, result)
+	}
+}
+
+func TestSolveConflict_Congruent(t *testing.T) {
+	store := storage.Ephemeral{}
+	serverStateCongruent := []data.Interval{
 		{
 			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
 			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
@@ -164,10 +288,75 @@ func TestSolveConflict(t *testing.T) {
 			Annotation: "problemOne",
 		},
 		{
-			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
 			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
 			Tags:       []string{"e", "d", "c"},
 			Annotation: "problemTwo",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+
+	congruentExpected := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"a", "b", "c", "d", "e", "problemOne", "problemTwo"},
+			Annotation: "",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+	store.Initialize()
+	store.SetIntervals(storage.UserId(0), serverStateCongruent)
+
+	conflict, err := SolveConflict(0, &store)
+	if err != nil {
+		t.Errorf("Congruent: Solve failed with error %v", err)
+	}
+	if !conflict {
+		t.Errorf("Congruent: Solve did not detected a conflict")
+	}
+	result, _ := store.GetIntervals(storage.UserId(0))
+	if !elementwiseEqual(congruentExpected, result) {
+		t.Errorf("Congruent: State after solve wrong. Expected %v got %v", congruentExpected, result)
+	}
+}
+
+func TestSolveConflict_Overlap(t *testing.T) {
+	store := storage.Ephemeral{}
+	serverStateOverlap := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"starting"},
+			Annotation: "problemStart",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
+			Tags:       []string{"ending"},
+			Annotation: "problemEnd",
 		},
 		{
 			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
@@ -209,88 +398,60 @@ func TestSolveConflict(t *testing.T) {
 			Annotation: "all normal here",
 		},
 	}
+	store.Initialize()
+	store.SetIntervals(storage.UserId(0), serverStateOverlap)
 
-	congruentExpected := []data.Interval{
-		{
-			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
-			Tags:       []string{"tag1"},
-			Annotation: "all normal here",
-		},
-		{
-			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
-			Tags:       []string{"a", "b", "c", "d", "e", "problemOne", "problemTwo"},
-			Annotation: "",
-		},
-		{
-			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
-			Tags:       []string{"tag2"},
-			Annotation: "all normal here",
-		},
+	conflict, err := SolveConflict(0, &store)
+	if err != nil {
+		t.Errorf("Overlap: Solve failed with error %v", err)
 	}
+	if !conflict {
+		t.Errorf("Overlap: Solve did not detected a conflict")
+	}
+	result, _ := store.GetIntervals(storage.UserId(0))
+	if !elementwiseEqual(overlapExpected, result) {
+		t.Errorf("Overlap: State after solve wrong. Expected %v got %v", overlapExpected, result)
+	}
+}
 
-	sameStartExpected := []data.Interval{
+func TestSolveConflict_NoConflicts(t *testing.T) {
+	store := storage.Ephemeral{}
+	serverStateNoConflicts := []data.Interval{
 		{
 			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 13, 30, 40, 0, time.UTC), // +1h
+			Tags:       []string{"tag1", "tag2"},
+			Annotation: "a",
+		},
+		{
+			Start:      time.Date(2000, 4, 10, 13, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 4, 10, 13, 30, 40, 0, time.UTC),
 			Tags:       []string{"tag1"},
-			Annotation: "all normal here",
-		},
-		{
-			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
-			Tags:       []string{"a", "b", "c", "d", "e", "problemOne", "problemTwo"},
-			Annotation: "",
-		},
-		{
-			Start:      time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
-			Tags:       []string{"e", "d", "c"},
-			Annotation: "problemTwo",
-		},
-		{
-			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
-			Tags:       []string{"tag2"},
-			Annotation: "all normal here",
+			Annotation: "b",
 		},
 	}
-	sameEndExpected := []data.Interval{
-		{
-			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
-			Tags:       []string{"tag1"},
-			Annotation: "all normal here",
-		},
-		{
-			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
-			Tags:       []string{"c", "a", "b"},
-			Annotation: "problemOne",
-		},
-		{
-			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
-			Tags:       []string{"a", "b", "c", "d", "e", "problemOne", "problemTwo"},
-			Annotation: "",
-		},
-		{
-			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
-			Tags:       []string{"tag2"},
-			Annotation: "all normal here",
-		},
+	store.Initialize()
+	store.SetIntervals(storage.UserId(0), serverStateNoConflicts)
+
+	conflict, err := SolveConflict(0, &store)
+	if err != nil {
+		t.Errorf("NoConflicts: Solve failed with error %v", err)
 	}
+	if conflict {
+		t.Errorf("NoConflicts: Solve falsely detected a conflict")
+	}
+	result, _ := store.GetIntervals(storage.UserId(0))
+	if !elementwiseEqual(serverStateNoConflicts, result) {
+		t.Errorf("NoConflicts: State after solve wrong. Expected %v got %v", serverStateNoConflicts, result)
+	}
+}
+
+func TestSolveConflict_NoIntervals(t *testing.T) {
+	store := storage.Ephemeral{}
+	serverStateNoIntervals := []data.Interval{}
 
 	store.Initialize()
 	store.SetIntervals(storage.UserId(0), serverStateNoIntervals)
-	store.SetIntervals(storage.UserId(1), serverStateNoConflicts)
-	store.SetIntervals(storage.UserId(2), serverStateOverlap)
-	store.SetIntervals(storage.UserId(3), serverStateCongruent)
-	store.SetIntervals(storage.UserId(4), serverStateSameStart)
-	store.SetIntervals(storage.UserId(5), serverStateSameEnd)
 
 	conflict, err := SolveConflict(0, &store)
 	if err != nil {
@@ -302,65 +463,5 @@ func TestSolveConflict(t *testing.T) {
 	result, _ := store.GetIntervals(storage.UserId(0))
 	if !elementwiseEqual(serverStateNoIntervals, result) {
 		t.Errorf("NoIntervals: State after solve wrong. Expected %v got %v", serverStateNoIntervals, result)
-	}
-
-	conflict, err = SolveConflict(1, &store)
-	if err != nil {
-		t.Errorf("NoConflicts: Solve failed with error %v", err)
-	}
-	if conflict {
-		t.Errorf("NoConflicts: Solve falsely detected a conflict")
-	}
-	result, _ = store.GetIntervals(storage.UserId(1))
-	if !elementwiseEqual(serverStateNoConflicts, result) {
-		t.Errorf("NoConflicts: State after solve wrong. Expected %v got %v", serverStateNoIntervals, result)
-	}
-
-	conflict, err = SolveConflict(2, &store)
-	if err != nil {
-		t.Errorf("Overlap: Solve failed with error %v", err)
-	}
-	if !conflict {
-		t.Errorf("Overlap: Solve did not detected a conflict")
-	}
-	result, _ = store.GetIntervals(storage.UserId(2))
-	if !elementwiseEqual(overlapExpected, result) {
-		t.Errorf("Overlap: State after solve wrong. Expected %v got %v", overlapExpected, result)
-	}
-
-	conflict, err = SolveConflict(3, &store)
-	if err != nil {
-		t.Errorf("Congruent: Solve failed with error %v", err)
-	}
-	if !conflict {
-		t.Errorf("Congruent: Solve did not detected a conflict")
-	}
-	result, _ = store.GetIntervals(storage.UserId(3))
-	if !elementwiseEqual(congruentExpected, result) {
-		t.Errorf("Congruent: State after solve wrong. Expected %v got %v", congruentExpected, result)
-	}
-
-	conflict, err = SolveConflict(4, &store)
-	if err != nil {
-		t.Errorf("SameStart: Solve failed with error %v", err)
-	}
-	if !conflict {
-		t.Errorf("SameStart: Solve did not detected a conflict")
-	}
-	result, _ = store.GetIntervals(storage.UserId(4))
-	if !elementwiseEqual(sameStartExpected, result) {
-		t.Errorf("SameStart: State after solve wrong. Expected %v got %v", sameStartExpected, result)
-	}
-
-	conflict, err = SolveConflict(5, &store)
-	if err != nil {
-		t.Errorf("SameEnd: Solve failed with error %v", err)
-	}
-	if !conflict {
-		t.Errorf("SameEnd: Solve did not detected a conflict")
-	}
-	result, _ = store.GetIntervals(storage.UserId(5))
-	if !elementwiseEqual(sameEndExpected, result) {
-		t.Errorf("SameEnd: State after solve wrong. Expected %v got %v", sameEndExpected, result)
 	}
 }

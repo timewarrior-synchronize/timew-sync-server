@@ -63,6 +63,7 @@ func Sync(syncRequest data.SyncRequest, store storage.Storage) ([]data.Interval,
 
 		}
 	}
+
 	result, err2 := store.GetIntervals(storage.UserId(syncRequest.UserID))
 	if err2 != nil {
 		restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // trying to restore backup
