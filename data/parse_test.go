@@ -27,10 +27,20 @@ func TestParseJSON(t *testing.T) {
 	{
 		"userID": 1,
 		"added": [
-			"inc 20200301T120000Z - 20200301T153000Z # prank add"
+			{
+				"start": "20200301T120000Z",
+				"end": "20200301T153000Z",
+				"tags": ["prank", "add"],
+				"annotation": ""
+			}
 		],
 		"removed": [
-			"inc 20200401T120000Z - 20200401T153000Z # prank remove"
+			{
+				"start": "20200401T120000Z",
+				"end": "20200401T153000Z",
+				"tags": ["prank", "remove"],
+				"annotation": ""
+			}
 		]
 	}`
 

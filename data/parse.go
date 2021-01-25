@@ -19,15 +19,16 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // JSONRequest represents the JSON structure of a sync request.
 // It contains the unique client id and an interval diff, stating added and removed intervals as strings.
 // It is (and should) only be used for JSON parsing.
 type JSONRequest struct {
-	UserID  int      `json:"userID"`
-	Added   []string `json:"added"`
-	Removed []string `json:"removed"`
+	UserID  int            `json:"userID"`
+	Added   []JSONInterval `json:"added"`
+	Removed []JSONInterval `json:"removed"`
 }
 
 // SyncRequest represents a sync request.
@@ -45,10 +46,24 @@ func ParseSyncRequest(jsonInput string) (SyncRequest, error) {
 	var requestData JSONRequest
 
 	err := json.Unmarshal([]byte(jsonInput), &requestData)
+	if err != nil {
+		return SyncRequest{}, fmt.Errorf("Error occured during JSON parse: %v", err)
+	}
+
+	added, err := FromJSONIntervals(requestData.Added)
+	if err != nil {
+		return SyncRequest{}, fmt.Errorf("Error occured during parsing of added intervals: %v", err)
+	}
+
+	removed, err := FromJSONIntervals(requestData.Removed)
+	if err != nil {
+		return SyncRequest{}, fmt.Errorf("Error occured during parsing of removed intervals: %v", err)
+	}
+
 	syncRequest := SyncRequest{
 		UserID:  requestData.UserID,
-		Added:   StringsToIntervals(requestData.Added),
-		Removed: StringsToIntervals(requestData.Removed),
+		Added:   added,
+		Removed: removed,
 	}
 
 	return syncRequest, err
