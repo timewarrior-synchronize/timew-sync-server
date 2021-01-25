@@ -156,3 +156,55 @@ WHERE user_id = $1 AND start_time = $2 AND end_time = $3 AND tags = $4 AND annot
 
 	return nil
 }
+
+// ModifyIntervals atomically adds and deletes a specified set of
+// intervals. Returns an error if an error occurs while modifying the
+// data
+func (s *Sql) ModifyIntervals(userId UserId, add []data.Interval, del []data.Interval) error {
+	ctx := context.Background()
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("sql_storage: Error while starting transaction: %w", err)
+	}
+
+	// Delete the specified intervals
+	q := `
+DELETE FROM interval
+WHERE user_id = $1 AND start_time = $2 AND end_time = $3 AND tags = $4 AND annotation = $5
+`
+	keysToDelete := ConvertToKeys(del)
+	for _, key := range keysToDelete {
+		_, err = tx.ExecContext(ctx, q, userId, key.Start, key.End, key.Tags, key.Annotation)
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Printf("sql_storage: Unable to rollback: %v", rollbackErr)
+				return err
+			}
+			return err
+		}
+	}
+
+	// Add the specified intervals
+	q = `
+INSERT INTO interval (user_id, start_time, end_time, tags, annotation)
+VALUES ($1, $2, $3, $4, $5)
+`
+	keysToAdd := ConvertToKeys(add)
+	for _, key := range keysToAdd {
+		_, err = tx.ExecContext(ctx, q, userId, key.Start, key.End, key.Tags, key.Annotation)
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Printf("sql_storage: Unable to rollback: %v", rollbackErr)
+				return err
+			}
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("sql_storage: Error during commit: %w", err)
+	}
+
+	return nil
+}
