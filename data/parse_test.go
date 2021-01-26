@@ -27,10 +27,20 @@ func TestParseJSON(t *testing.T) {
 	{
 		"userID": 1,
 		"added": [
-			"inc 20200301T120000Z - 20200301T153000Z # prank add"
+			{
+				"start": "20200301T120000Z",
+				"end": "20200301T153000Z",
+				"tags": ["prank", "add"],
+				"annotation": "annotation 1"
+			}
 		],
 		"removed": [
-			"inc 20200401T120000Z - 20200401T153000Z # prank remove"
+			{
+				"start": "20200401T120000Z",
+				"end": "20200401T153000Z",
+				"tags": ["prank", "remove"],
+				"annotation": "all your codebase are belong to us"
+			}
 		]
 	}`
 
@@ -38,16 +48,18 @@ func TestParseJSON(t *testing.T) {
 		UserID: 1,
 		Added: []Interval{
 			{
-				Start: time.Date(2020, time.March, 1, 12, 0, 0, 0, time.UTC),
-				End:   time.Date(2020, time.March, 1, 15, 30, 0, 0, time.UTC),
-				Tags:  []string{"prank", "add"},
+				Start:      time.Date(2020, time.March, 1, 12, 0, 0, 0, time.UTC),
+				End:        time.Date(2020, time.March, 1, 15, 30, 0, 0, time.UTC),
+				Tags:       []string{"prank", "add"},
+				Annotation: "annotation 1",
 			},
 		},
 		Removed: []Interval{
 			{
-				Start: time.Date(2020, time.April, 1, 12, 0, 0, 0, time.UTC),
-				End:   time.Date(2020, time.April, 1, 15, 30, 0, 0, time.UTC),
-				Tags:  []string{"prank", "remove"},
+				Start:      time.Date(2020, time.April, 1, 12, 0, 0, 0, time.UTC),
+				End:        time.Date(2020, time.April, 1, 15, 30, 0, 0, time.UTC),
+				Tags:       []string{"prank", "remove"},
+				Annotation: "all your codebase are belong to us",
 			},
 		},
 	}
