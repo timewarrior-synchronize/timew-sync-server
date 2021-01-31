@@ -81,7 +81,7 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 			// The Tags and Annotation fields of the created intervals are:
 			//	(1) just the Tags and Annotation fields of the interval, that includes the timespan of the created
 			//		created interval (iff only one such interval exists)
-			//	(2) the merged Tags and Annotation of both intervals as specified in uniteTagsAndAnnotation else
+			//	(2) the merged Tags and Annotation of both intervals as specified in UniteTagsAndAnnotation else
 			conflictDetected = true
 			removed = append(removed, openInterval, interval)
 
@@ -106,7 +106,7 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 			}
 
 			// middle section
-			tags, annotation := uniteTagsAndAnnotation(openInterval, interval)
+			tags, annotation := UniteTagsAndAnnotation(openInterval, interval)
 			if openInterval.End.After(interval.End) {
 				nextInterval = data.Interval{
 					Start: interval.Start, // We have to use this start time since this is the middle section and
@@ -166,13 +166,13 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 	return conflictDetected, nil
 }
 
-// uniteTagsAndAnnotation computes the new tags and annotation for overlapping intervals and returns tags, annotation.
+// UniteTagsAndAnnotation computes the new tags and annotation for overlapping intervals and returns tags, annotation.
 // Case 1: Iff only one interval has an Annotation, we use this annotation. Case 2: Iff no interval has an annotation,
 // we use "" as annotation. Case 3: Iff both intervals have different annotation, we use "" as annotation, and add both
 // annotation to tags. Case 4: Iff both intervals have the same annotation, we just use that annotation
 // As tags we return the alphabetically sorted union of both intervals' tags (and both annotations in Case 3)
 // without duplicates.
-func uniteTagsAndAnnotation(a data.Interval, b data.Interval) ([]string, string) {
+func UniteTagsAndAnnotation(a data.Interval, b data.Interval) ([]string, string) {
 	tags := make([]string, len(a.Tags), len(a.Tags)+len(b.Tags))
 	tmp := make([]string, len(b.Tags))
 	copy(tags, a.Tags)

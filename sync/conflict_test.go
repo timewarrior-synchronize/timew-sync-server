@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -51,6 +52,103 @@ func sliceString(s []data.Interval) {
 		fmt.Printf("\n-------------------------------------\nStart = %v\nEnd = %v\nTags = %v\nAnnotation = %v", i.Start, i.End, i.Tags, i.Annotation)
 	}
 	fmt.Printf("\n]\n\n\n")
+}
+
+func TestSolveConflict_MultiConflict(t *testing.T) {
+	store := storage.Ephemeral{}
+	serverStateMultiConflict := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"starting"},
+			Annotation: "problemStart",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 13, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 19, 30, 40, 0, time.UTC),
+			Tags:       []string{"middle"},
+			Annotation: "problemMiddle",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
+			Tags:       []string{"ending"},
+			Annotation: "problemEnd",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+
+	multiConflictExpected := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag1"},
+			Annotation: "all normal here",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 13, 30, 40, 0, time.UTC), // changed end time
+			Tags:       []string{"starting"},
+			Annotation: "problemStart",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 13, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			Tags:       []string{"middle", "problemMiddle", "problemStart", "starting"},
+			Annotation: "",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"ending", "middle", "problemMiddle", "problemStart", "starting"},
+			Annotation: "problemEnd",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 19, 30, 40, 0, time.UTC),
+			Tags:       []string{"ending", "middle", "problemEnd", "problemMiddle"},
+			Annotation: "",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 19, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
+			Tags:       []string{"ending"},
+			Annotation: "problemEnd",
+		},
+		{
+			Start:      time.Date(2000, 5, 12, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 12, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"tag2"},
+			Annotation: "all normal here",
+		},
+	}
+	store.Initialize()
+	store.SetIntervals(storage.UserId(0), serverStateMultiConflict)
+
+	conflict, err := SolveConflict(0, &store)
+	if err != nil {
+		t.Errorf("MultiConflict: Solve failed with error %v", err)
+	}
+	if !conflict {
+		t.Errorf("MultiConflict: Solve did not detected a conflict")
+	}
+	result, _ := store.GetIntervals(storage.UserId(0))
+	sliceString(multiConflictExpected)
+	sliceString(result)
+	if !elementwiseEqual(multiConflictExpected, result) {
+		t.Errorf("MultiConflict: State after solve wrong. Expected %v got %v", multiConflictExpected, result)
+	}
 }
 
 func TestSolveConflict_InnerInterval(t *testing.T) {
@@ -463,5 +561,195 @@ func TestSolveConflict_NoIntervals(t *testing.T) {
 	result, _ := store.GetIntervals(storage.UserId(0))
 	if !elementwiseEqual(serverStateNoIntervals, result) {
 		t.Errorf("NoIntervals: State after solve wrong. Expected %v got %v", serverStateNoIntervals, result)
+	}
+}
+
+func TestUniteTagsAndAnnotation_AllEmpty(t *testing.T) {
+	a := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{},
+		Annotation: "",
+	}
+	b := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{},
+		Annotation: "",
+	}
+	tags, annotation := UniteTagsAndAnnotation(a, b)
+	if !reflect.DeepEqual(tags, []string{}) {
+		t.Errorf("AllEmpty: Tags do not match. Expected %v got %v", []string{}, tags)
+	}
+	if annotation != "" {
+		t.Errorf("AllEmpty: Annotation does not match. Expected %v got %v", "", annotation)
+	}
+}
+
+func TestUniteTagsAndAnnotation_DifferentAnnotations(t *testing.T) {
+	a := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"tag_a"},
+		Annotation: "a",
+	}
+	b := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"tag_b"},
+		Annotation: "b",
+	}
+	tagsExpected := []string{"a", "b", "tag_a", "tag_b"}
+	annotationExpected := ""
+	tags, annotation := UniteTagsAndAnnotation(a, b)
+	if !reflect.DeepEqual(tags, tagsExpected) {
+		t.Errorf("DifferentAnnotations: Tags do not match. Expected %v got %v", []string{}, tags)
+	}
+	if annotation != annotationExpected {
+		t.Errorf("DifferentAnnotations: Annotation does not match. Expected %v got %v", "", annotation)
+	}
+}
+
+func TestUniteTagsAndAnnotation_AnnotationAPresent(t *testing.T) {
+	a := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"tag_a"},
+		Annotation: "a",
+	}
+	b := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"tag_b"},
+		Annotation: "",
+	}
+	tagsExpected := []string{"tag_a", "tag_b"}
+	annotationExpected := "a"
+	tags, annotation := UniteTagsAndAnnotation(a, b)
+	if !reflect.DeepEqual(tags, tagsExpected) {
+		t.Errorf("AnnotationAPresent: Tags do not match. Expected %v got %v", []string{}, tags)
+	}
+	if annotation != annotationExpected {
+		t.Errorf("AnnotationAPresent: Annotation does not match. Expected %v got %v", "", annotation)
+	}
+}
+
+func TestUniteTagsAndAnnotation_AnnotationBPresent(t *testing.T) {
+	a := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"tag_a"},
+		Annotation: "",
+	}
+	b := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"tag_b"},
+		Annotation: "b",
+	}
+	tagsExpected := []string{"tag_a", "tag_b"}
+	annotationExpected := "b"
+	tags, annotation := UniteTagsAndAnnotation(a, b)
+	if !reflect.DeepEqual(tags, tagsExpected) {
+		t.Errorf("AnnotationBPresent: Tags do not match. Expected %v got %v", []string{}, tags)
+	}
+	if annotation != annotationExpected {
+		t.Errorf("AnnotationBPresent: Annotation does not match. Expected %v got %v", "", annotation)
+	}
+}
+
+func TestUniteTagsAndAnnotation_SameAnnotation(t *testing.T) {
+	a := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"tag_a"},
+		Annotation: "same",
+	}
+	b := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"tag_b"},
+		Annotation: "same",
+	}
+	tagsExpected := []string{"tag_a", "tag_b"}
+	annotationExpected := "same"
+	tags, annotation := UniteTagsAndAnnotation(a, b)
+	if !reflect.DeepEqual(tags, tagsExpected) {
+		t.Errorf("SameAnnotation: Tags do not match. Expected %v got %v", []string{}, tags)
+	}
+	if annotation != annotationExpected {
+		t.Errorf("SameAnnotation: Annotation does not match. Expected %v got %v", "", annotation)
+	}
+}
+
+func TestUniteTagsAndAnnotation_TagOverlap(t *testing.T) {
+	a := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"tag_a", "tag_same"},
+		Annotation: "a",
+	}
+	b := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"tag_b", "tag_same"},
+		Annotation: "b",
+	}
+	tagsExpected := []string{"a", "b", "tag_a", "tag_b", "tag_same"}
+	annotationExpected := ""
+	tags, annotation := UniteTagsAndAnnotation(a, b)
+	if !reflect.DeepEqual(tags, tagsExpected) {
+		t.Errorf("TagOverlap: Tags do not match. Expected %v got %v", []string{}, tags)
+	}
+	if annotation != annotationExpected {
+		t.Errorf("TagOverlap: Annotation does not match. Expected %v got %v", "", annotation)
+	}
+}
+
+func TestUniteTagsAndAnnotation_NoTagsDifferentAnnotation(t *testing.T) {
+	a := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{},
+		Annotation: "a",
+	}
+	b := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{},
+		Annotation: "b",
+	}
+	tagsExpected := []string{"a", "b"}
+	annotationExpected := ""
+	tags, annotation := UniteTagsAndAnnotation(a, b)
+	if !reflect.DeepEqual(tags, tagsExpected) {
+		t.Errorf("NoTagsDifferentAnnotation: Tags do not match. Expected %v got %v", []string{}, tags)
+	}
+	if annotation != annotationExpected {
+		t.Errorf("NoTagsDifferentAnnotation: Annotation does not match. Expected %v got %v", "", annotation)
+	}
+}
+
+func TestUniteTagsAndAnnotation_DifferentAnnotationsPresentInTags(t *testing.T) {
+	a := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"b"},
+		Annotation: "a",
+	}
+	b := data.Interval{
+		Start:      time.Time{},
+		End:        time.Time{},
+		Tags:       []string{"x", "y", "z"},
+		Annotation: "b",
+	}
+	tagsExpected := []string{"a", "b", "x", "y", "z"}
+	annotationExpected := ""
+	tags, annotation := UniteTagsAndAnnotation(a, b)
+	if !reflect.DeepEqual(tags, tagsExpected) {
+		t.Errorf("NoTagsDifferentAnnotation: Tags do not match. Expected %v got %v", []string{}, tags)
+	}
+	if annotation != annotationExpected {
+		t.Errorf("NoTagsDifferentAnnotation: Annotation does not match. Expected %v got %v", "", annotation)
 	}
 }
