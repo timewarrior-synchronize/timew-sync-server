@@ -67,6 +67,10 @@ WHERE user_id == ?
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("Results differ from expected:\n%s", diff)
 	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
 }
 
 func TestSql_SetIntervals(t *testing.T) {
@@ -112,6 +116,10 @@ INSERT INTO interval
 	err = sql.SetIntervals(42, testData)
 	if err != nil {
 		t.Errorf("Error '%s' during SetIntervals", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
 
@@ -222,4 +230,9 @@ VALUES \(\$1, \$2, \$3, \$4, \$5\)
 	if err != nil {
 		t.Errorf("Error '%s' during SetIntervals", err)
 	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
 }
