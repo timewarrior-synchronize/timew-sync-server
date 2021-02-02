@@ -72,13 +72,19 @@ func ParseSyncRequest(jsonInput string) (SyncRequest, error) {
 // ResponseData represents a sync response
 // It contains the new interval for the client
 type ResponseData struct {
-	IntervalData []string `json:"intervalData"`
+	ConflictsOccurred bool           `json:"conflictsOccurred"`
+	Intervals         []JSONInterval `json:"intervals"`
 }
 
 // ToJSON creates JSON for response body from interval data and returns it as string
 func ToJSON(data []Interval) (string, error) {
-	var responseData ResponseData
-	responseData.IntervalData = IntervalsToStrings(data)
-	result, err := json.Marshal(responseData)
-	return string(result), err
+	response := ResponseData{
+		// TODO: Return the real value when the conflict solving layer is implemented.
+		ConflictsOccurred: false,
+		Intervals:         ToJSONIntervals(data),
+	}
+
+	jsonResult, err := json.Marshal(response)
+
+	return string(jsonResult), err
 }

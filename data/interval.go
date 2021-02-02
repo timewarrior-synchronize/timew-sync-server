@@ -102,7 +102,7 @@ func FromJSONIntervals(intervals []JSONInterval) ([]Interval, error) {
 
 // Convenience wrapper around ToJSONInterval() which batch processes a
 // slice of Interval
-func FromIntervals(intervals []Interval) []JSONInterval {
+func ToJSONIntervals(intervals []Interval) []JSONInterval {
 	result := make([]JSONInterval, len(intervals))
 
 	for i, x := range intervals {
