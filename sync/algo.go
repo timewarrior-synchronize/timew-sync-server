@@ -66,7 +66,7 @@ func Sync(syncRequest data.SyncRequest, store storage.Storage) ([]data.Interval,
 
 	conflict, solveErr := SolveConflict(syncRequest.UserID, store)
 	if solveErr != nil {
-		restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // trying to restore backup
+		restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // try to restore backup
 		if restoreError != nil {
 			return nil, conflict, fmt.Errorf("fatal error: Failed to solve conflicts %v. Also could not restore server state", solveErr)
 		} else {
