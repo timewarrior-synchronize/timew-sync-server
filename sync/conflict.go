@@ -79,7 +79,7 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 			// starts with the earlier start time and ends with the later start time of the conflicting intervals.
 			//
 			// The Tags and Annotation fields of the created intervals are:
-			//	(1) just the Tags and Annotation fields of the interval, that includes the timespan of the created
+			//	(1) just the Tags and Annotation fields of the interval that includes the timespan of the created
 			//		created interval (iff only one such interval exists)
 			//	(2) the merged Tags and Annotation of both intervals as specified in UniteTagsAndAnnotation else
 			conflictDetected = true
