@@ -136,7 +136,7 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 				addedThisIteration = append(addedThisIteration, nextInterval)
 			}
 
-			//getting ready for next iteration
+			// getting ready for next iteration
 			openInterval = nextInterval
 			added = append(added, addedThisIteration...)
 
