@@ -78,13 +78,14 @@ func TestParseJSON(t *testing.T) {
 func TestToJSON(t *testing.T) {
 	testInput := []Interval{
 		{
-			Start: time.Date(2020, time.April, 1, 12, 0, 0, 0, time.UTC),
-			End:   time.Date(2020, time.April, 1, 15, 30, 0, 0, time.UTC),
-			Tags:  []string{"prank", "laugh"},
+			Start:      time.Date(2020, time.April, 1, 12, 0, 0, 0, time.UTC),
+			End:        time.Date(2020, time.April, 1, 15, 30, 0, 0, time.UTC),
+			Tags:       []string{"prank", "laugh"},
+			Annotation: "Sample Annotation",
 		},
 	}
 
-	expected := `{"intervalData":["inc 20200401T120000Z - 20200401T153000Z # prank laugh"]}`
+	expected := `{"conflictsOccured": false, "intervals": [{"start": "20200401T120000Z", "end": "20200401T153000Z", "tags": ["prank", "laugh"], "annotation": "Sample Annotation"}]}`
 
 	result, err := ToJSON(testInput)
 	if err != nil {
