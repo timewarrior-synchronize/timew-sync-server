@@ -17,6 +17,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package storage
 
 import (
+	"fmt"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"github.com/google/go-cmp/cmp"
 	"testing"
@@ -67,6 +68,10 @@ WHERE user_id == ?
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("Results differ from expected:\n%s", diff)
 	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
 }
 
 func TestSql_SetIntervals(t *testing.T) {
@@ -112,6 +117,10 @@ INSERT INTO interval
 	err = sql.SetIntervals(42, testData)
 	if err != nil {
 		t.Errorf("Error '%s' during SetIntervals", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
 
@@ -171,4 +180,108 @@ WHERE user_id = \$1 AND start_time = \$2 AND end_time = \$3 AND tags = \$4 AND a
 	if err != nil {
 		t.Errorf("Error '%s' during RemoveInterval", err)
 	}
+}
+
+func TestSql_ModifyIntervals(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	add := []data.Interval{
+		{
+			Start:      time.Date(2020, 01, 01, 12, 0, 0, 0, time.UTC),
+			End:        time.Date(2020, 01, 01, 13, 0, 0, 0, time.UTC),
+			Tags:       []string{"Tag3", "Tag4"},
+			Annotation: "Annotation2",
+		},
+	}
+
+	del := []data.Interval{
+		{
+			Start:      time.Date(2021, 01, 01, 12, 0, 0, 0, time.UTC),
+			End:        time.Date(2021, 01, 01, 13, 0, 0, 0, time.UTC),
+			Tags:       []string{"Tag1", "Tag2"},
+			Annotation: "Annotation",
+		},
+	}
+
+	mock.ExpectBegin()
+	q := `
+DELETE FROM interval
+WHERE user_id = \$1 AND start_time = \$2 AND end_time = \$3 AND tags = \$4 AND annotation = \$5
+`
+	mock.ExpectExec(q).
+		WithArgs(123, del[0].Start, del[0].End, IntervalToKey(del[0]).Tags, del[0].Annotation).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	q = `
+INSERT INTO interval \(user_id, start_time, end_time, tags, annotation\)
+VALUES \(\$1, \$2, \$3, \$4, \$5\)
+`
+	mock.ExpectExec(q).
+		WithArgs(123, add[0].Start, add[0].End, IntervalToKey(add[0]).Tags, add[0].Annotation).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	mock.ExpectCommit()
+
+	sql := Sql{DB: db}
+	err = sql.ModifyIntervals(123, add, del)
+	if err != nil {
+		t.Errorf("Error '%s' during SetIntervals", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+}
+
+func TestSql_ModifyIntervals_Rollback(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	add := []data.Interval{
+		{
+			Start:      time.Date(2020, 01, 01, 12, 0, 0, 0, time.UTC),
+			End:        time.Date(2020, 01, 01, 13, 0, 0, 0, time.UTC),
+			Tags:       []string{"Tag3", "Tag4"},
+			Annotation: "Annotation2",
+		},
+	}
+
+	del := []data.Interval{
+		{
+			Start:      time.Date(2021, 01, 01, 12, 0, 0, 0, time.UTC),
+			End:        time.Date(2021, 01, 01, 13, 0, 0, 0, time.UTC),
+			Tags:       []string{"Tag1", "Tag2"},
+			Annotation: "Annotation",
+		},
+	}
+
+	mock.ExpectBegin()
+	q := `
+DELETE FROM interval
+WHERE user_id = \$1 AND start_time = \$2 AND end_time = \$3 AND tags = \$4 AND annotation = \$5
+`
+	mock.ExpectExec(q).
+		WithArgs(123, del[0].Start, del[0].End, IntervalToKey(del[0]).Tags, del[0].Annotation).
+		WillReturnError(fmt.Errorf("Artificial error"))
+
+	mock.ExpectRollback()
+
+	sql := Sql{DB: db}
+	err = sql.ModifyIntervals(123, add, del)
+	if err == nil {
+		t.Errorf("Expected error, but got none")
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
 }

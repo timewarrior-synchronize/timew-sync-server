@@ -100,6 +100,10 @@ type Storage interface {
 	// SetIntervals overrides all intervals of a user
 	SetIntervals(userId UserId, intervals []data.Interval) error
 
+	// ModifyIntervals atomically adds and deletes a specified set
+	// of intervals
+	ModifyIntervals(userId UserId, add []data.Interval, del []data.Interval) error
+
 	// AddInterval adds an interval to a user's intervals
 	AddInterval(userId UserId, interval data.Interval) error
 

@@ -56,3 +56,45 @@ func TestEphemeralStorage(t *testing.T) {
 		}
 	}
 }
+
+func TestEphemeralStorage_ModifyIntervals(t *testing.T) {
+	var s Storage
+	add := []data.Interval{
+		{
+			Start:      time.Date(2020, 01, 01, 12, 0, 0, 0, time.UTC),
+			End:        time.Date(2020, 01, 01, 13, 0, 0, 0, time.UTC),
+			Tags:       []string{"Tag3", "Tag4"},
+			Annotation: "Annotation2",
+		},
+	}
+	del := []data.Interval{
+		{
+			Start:      time.Date(2021, 01, 01, 12, 0, 0, 0, time.UTC),
+			End:        time.Date(2021, 01, 01, 13, 0, 0, 0, time.UTC),
+			Tags:       []string{"Tag1", "Tag2"},
+			Annotation: "Annotation",
+		},
+	}
+
+	s = &Ephemeral{}
+	_ = s.Initialize()
+	_ = s.SetIntervals(42, del)
+	_ = s.ModifyIntervals(42, add, del)
+	result, _ := s.GetIntervals(42)
+
+	if len(result) != len(add) {
+		t.Errorf("length doesn't match, expected %v, got %v", len(add), len(result))
+	}
+
+	for _, x := range result {
+		correct := false
+		for i, _ := range add {
+			if diff := cmp.Diff(add[i], x); diff == "" {
+				correct = true
+			}
+		}
+		if !correct {
+			t.Errorf("result: %v not as expected: %v They do not contain exactly the same elements", result, add)
+		}
+	}
+}
