@@ -85,7 +85,7 @@ func TestToJSON(t *testing.T) {
 		},
 	}
 
-	expected := `{"conflictsOccured": false, "intervals": [{"start": "20200401T120000Z", "end": "20200401T153000Z", "tags": ["prank", "laugh"], "annotation": "Sample Annotation"}]}`
+	expected := `{"conflictsOccurred":false,"intervals":[{"start":"20200401T120000Z","end":"20200401T153000Z","tags":["prank","laugh"],"annotation":"Sample Annotation"}]}`
 
 	result, err := ToJSON(testInput)
 	if err != nil {
