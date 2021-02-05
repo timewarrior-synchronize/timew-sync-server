@@ -23,8 +23,10 @@ import (
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
 )
 
-// Sync updates the stored state in passed storage.Storage for the user issuing the sync request. If something fails it tries to restore the state
-// prior to the syncRequest. This is not always possible though. The error message denotes whether restoring state was successful.
+// Sync updates the stored state in passed storage.Storage for the user issuing the sync request. If something fails it
+//tries to restore the state
+// prior to the syncRequest. This is not always possible though. The error message denotes whether restoring state was
+//successful.
 // Later atomicity should be guaranteed by storage.
 // Iff no errors occur Sync returns the synced interval data of the user issuing the sync request.
 func Sync(syncRequest data.SyncRequest, store storage.Storage) ([]data.Interval, bool, error) {
@@ -35,16 +37,19 @@ func Sync(syncRequest data.SyncRequest, store storage.Storage) ([]data.Interval,
 	// First, remove all intervals the client removed in its diff
 	backup, err := store.GetIntervals(storage.UserId(syncRequest.UserID))
 	if err != nil {
-		return nil, false, fmt.Errorf("fatal error: Could not retrieve stored intervals for backup. Stored state did not change")
+		return nil, false, fmt.Errorf("fatal error: Could not retrieve stored intervals for backup. " +
+			"Stored state did not change")
 	}
 	for _, removedInterval := range syncRequest.Removed {
 		err = store.RemoveInterval(storage.UserId(syncRequest.UserID), removedInterval)
 		if err != nil {
 			restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // trying to restore backup
 			if restoreError != nil {
-				return nil, false, fmt.Errorf("fatal error: Failed to remove interval %v from storage. Also could not restore server state", removedInterval)
+				return nil, false, fmt.Errorf("fatal error: Failed to remove interval %v from storage. "+
+					"Also could not restore server state", removedInterval)
 			} else {
-				return nil, false, fmt.Errorf("fatal error: Failed to remove interval %v from storage. Stored state did not change", removedInterval)
+				return nil, false, fmt.Errorf("fatal error: Failed to remove interval %v from storage. "+
+					"Stored state did not change", removedInterval)
 			}
 
 		}
@@ -56,9 +61,11 @@ func Sync(syncRequest data.SyncRequest, store storage.Storage) ([]data.Interval,
 		if err != nil {
 			restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // trying to restore backup
 			if restoreError != nil {
-				return nil, false, fmt.Errorf("fatal error: Failed to add interval %v to storage. Also could not restore server state", addedInterval)
+				return nil, false, fmt.Errorf("fatal error: Failed to add interval %v to storage. "+
+					"Also could not restore server state", addedInterval)
 			} else {
-				return nil, false, fmt.Errorf("fatal error: Failed to add interval %v to storage. Stored state did not change", addedInterval)
+				return nil, false, fmt.Errorf("fatal error: Failed to add interval %v to storage. "+
+					"Stored state did not change", addedInterval)
 			}
 
 		}
@@ -68,9 +75,11 @@ func Sync(syncRequest data.SyncRequest, store storage.Storage) ([]data.Interval,
 	if solveErr != nil {
 		restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // try to restore backup
 		if restoreError != nil {
-			return nil, conflict, fmt.Errorf("fatal error: Failed to solve conflicts %v. Also could not restore server state", solveErr)
+			return nil, conflict, fmt.Errorf("fatal error: Failed to solve conflicts %v. "+
+				"Also could not restore server state", solveErr)
 		} else {
-			return nil, conflict, fmt.Errorf("fatal error: Failed to solve conflicts %v. Stored state unchanged", solveErr)
+			return nil, conflict, fmt.Errorf("fatal error: Failed to solve conflicts %v. "+
+				"Stored state unchanged", solveErr)
 		}
 	}
 
@@ -78,9 +87,11 @@ func Sync(syncRequest data.SyncRequest, store storage.Storage) ([]data.Interval,
 	if err2 != nil {
 		restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // trying to restore backup
 		if restoreError != nil {
-			return nil, conflict, fmt.Errorf("fatal error: Failed to retrieve intervals from storage. Also could not restore server state")
+			return nil, conflict, fmt.Errorf("fatal error: Failed to retrieve intervals from storage. " +
+				"Also could not restore server state")
 		} else {
-			return nil, conflict, fmt.Errorf("fatal error: Failed to retrieve intervals from storage. Stored state did not change")
+			return nil, conflict, fmt.Errorf("fatal error: Failed to retrieve intervals from storage. " +
+				"Stored state did not change")
 		}
 	}
 	return result, conflict, nil

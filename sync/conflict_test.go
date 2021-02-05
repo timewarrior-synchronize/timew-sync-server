@@ -49,7 +49,8 @@ func elementwiseEqual(aSlice []data.Interval, bSlice []data.Interval) bool {
 func sliceString(s []data.Interval) {
 	print("[\n")
 	for _, i := range s {
-		fmt.Printf("\n-------------------------------------\nStart = %v\nEnd = %v\nTags = %v\nAnnotation = %v", i.Start, i.End, i.Tags, i.Annotation)
+		fmt.Printf("\n-------------------------------------\nStart = %v\nEnd = %v\nTags = %v\nAnnotation = %v",
+			i.Start, i.End, i.Tags, i.Annotation)
 	}
 	fmt.Printf("\n]\n\n\n")
 }
@@ -98,7 +99,7 @@ func TestSolveConflict_MultiConflict(t *testing.T) {
 		},
 		{
 			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 11, 13, 30, 40, 0, time.UTC), // changed end time
+			End:        time.Date(2000, 5, 11, 13, 30, 40, 0, time.UTC),
 			Tags:       []string{"starting"},
 			Annotation: "problemStart",
 		},
@@ -189,7 +190,7 @@ func TestSolveConflict_InnerInterval(t *testing.T) {
 		},
 		{
 			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC), // changed end time
+			End:        time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
 			Tags:       []string{"outer"},
 			Annotation: "o",
 		},
@@ -200,7 +201,7 @@ func TestSolveConflict_InnerInterval(t *testing.T) {
 			Annotation: "",
 		},
 		{
-			Start:      time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC), // changed start time
+			Start:      time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
 			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
 			Tags:       []string{"outer"},
 			Annotation: "o",
@@ -473,7 +474,7 @@ func TestSolveConflict_Overlap(t *testing.T) {
 		},
 		{
 			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
-			End:        time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC), // changed end time
+			End:        time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
 			Tags:       []string{"starting"},
 			Annotation: "problemStart",
 		},
@@ -484,7 +485,7 @@ func TestSolveConflict_Overlap(t *testing.T) {
 			Annotation: "",
 		},
 		{
-			Start:      time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC), // changed start time
+			Start:      time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
 			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
 			Tags:       []string{"ending"},
 			Annotation: "problemEnd",
@@ -726,7 +727,8 @@ func TestUniteTagsAndAnnotation_NoTagsDifferentAnnotation(t *testing.T) {
 		t.Errorf("NoTagsDifferentAnnotation: Tags do not match. Expected %v got %v", []string{}, tags)
 	}
 	if annotation != annotationExpected {
-		t.Errorf("NoTagsDifferentAnnotation: Annotation does not match. Expected %v got %v", "", annotation)
+		t.Errorf("NoTagsDifferentAnnotation: Annotation does not match. "+
+			"Expected %v got %v", "", annotation)
 	}
 }
 

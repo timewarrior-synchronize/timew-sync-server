@@ -62,7 +62,8 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 
 		addedThisIteration = []data.Interval{}
 
-		if interval.Start.Equal(openInterval.End) || interval.Start.After(openInterval.End) { // standard case - no conflict
+		if interval.Start.Equal(openInterval.End) || interval.Start.After(openInterval.End) {
+			// standard case - no conflict
 			openInterval = interval
 		} else {
 			// If two intervals (in this case openInterval and interval) are in conflict, both intervals are removed and
@@ -153,13 +154,15 @@ func SolveConflict(userId int, store storage.Storage) (bool, error) {
 	for _, a := range added {
 		err = store.AddInterval(storage.UserId(userId), a)
 		if err != nil {
-			return conflictDetected, fmt.Errorf("Unable to change User Data for UserId %v in Storage:\n%v", userId, err)
+			return conflictDetected, fmt.Errorf("Unable to change User Data for UserId %v in Storage:\n%v",
+				userId, err)
 		}
 	}
 	for _, r := range removed {
 		err = store.RemoveInterval(storage.UserId(userId), r)
 		if err != nil {
-			return conflictDetected, fmt.Errorf("Unable to change User Data for UserId %v in Storage:\n%v", userId, err)
+			return conflictDetected, fmt.Errorf("Unable to change User Data for UserId %v in Storage:\n%v",
+				userId, err)
 		}
 	}
 
