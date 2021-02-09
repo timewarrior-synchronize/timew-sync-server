@@ -39,7 +39,7 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
 		log.Printf("Error parsing sync request. Ignoring request.")
 		return
 	}
-	syncData, err := Sync(requestData, storage.GlobalStorage)
+	syncData, _, err := Sync(requestData, storage.GlobalStorage)
 	if err != nil {
 		log.Printf("syncing failed")
 	}
