@@ -77,10 +77,9 @@ type ResponseData struct {
 }
 
 // ToJSON creates JSON for response body from interval data and returns it as string
-func ToJSON(data []Interval) (string, error) {
+func ToJSON(data []Interval, conflict bool) (string, error) {
 	response := ResponseData{
-		// TODO: Return the real value when the conflict solving layer is implemented.
-		ConflictsOccurred: false,
+		ConflictsOccurred: conflict,
 		Intervals:         ToJSONIntervals(data),
 	}
 
