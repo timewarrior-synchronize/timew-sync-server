@@ -139,7 +139,7 @@ func TestSql_AddInterval(t *testing.T) {
 	}
 
 	q := `
-INSERT INTO interval \(user_id, start_time, end_time, tags, annotation\)
+INSERT OR IGNORE INTO interval \(user_id, start_time, end_time, tags, annotation\)
 VALUES \(\$1, \$2, \$3, \$4, \$5\)
 `
 	mock.ExpectExec(q).
@@ -217,7 +217,7 @@ WHERE user_id = \$1 AND start_time = \$2 AND end_time = \$3 AND tags = \$4 AND a
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	q = `
-INSERT INTO interval \(user_id, start_time, end_time, tags, annotation\)
+INSERT OR IGNORE INTO interval \(user_id, start_time, end_time, tags, annotation\)
 VALUES \(\$1, \$2, \$3, \$4, \$5\)
 `
 	mock.ExpectExec(q).

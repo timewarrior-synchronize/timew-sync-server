@@ -129,7 +129,7 @@ VALUES ($1, $2, $3, $4, $5)
 // Returns an error if an error occurs while adding the interval
 func (s *Sql) AddInterval(userId UserId, interval data.Interval) error {
 	q := `
-INSERT INTO interval (user_id, start_time, end_time, tags, annotation)
+INSERT OR IGNORE INTO interval (user_id, start_time, end_time, tags, annotation)
 VALUES ($1, $2, $3, $4, $5)
 `
 	key := IntervalToKey(interval)
@@ -186,7 +186,7 @@ WHERE user_id = $1 AND start_time = $2 AND end_time = $3 AND tags = $4 AND annot
 
 	// Add the specified intervals
 	q = `
-INSERT INTO interval (user_id, start_time, end_time, tags, annotation)
+INSERT OR IGNORE INTO interval (user_id, start_time, end_time, tags, annotation)
 VALUES ($1, $2, $3, $4, $5)
 `
 	keysToAdd := ConvertToKeys(add)
