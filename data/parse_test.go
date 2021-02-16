@@ -75,7 +75,7 @@ func TestParseJSON(t *testing.T) {
 
 }
 
-func TestToJSON(t *testing.T) {
+func TestToJSON_noConflict(t *testing.T) {
 	testInput := []Interval{
 		{
 			Start:      time.Date(2020, time.April, 1, 12, 0, 0, 0, time.UTC),
@@ -87,7 +87,7 @@ func TestToJSON(t *testing.T) {
 
 	expected := `{"conflictsOccurred":false,"intervals":[{"start":"20200401T120000Z","end":"20200401T153000Z","tags":["prank","laugh"],"annotation":"Sample Annotation"}]}`
 
-	result, err := ToJSON(testInput)
+	result, err := ToJSON(testInput, false)
 	if err != nil {
 		t.Errorf("Unexpected Error: %v", err)
 	}
@@ -96,4 +96,19 @@ func TestToJSON(t *testing.T) {
 		t.Errorf("Result differs from expected: \n%s", diff)
 	}
 
+}
+
+func TestToJSON_withConflict(t *testing.T) {
+	var testInput []Interval
+
+	expected := `{"conflictsOccurred":true,"intervals":[]}`
+
+	result, err := ToJSON(testInput, true)
+	if err != nil {
+		t.Errorf("Unexpected Error: %e", err)
+	}
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("Result differs from expected: \n%s", diff)
+	}
 }
