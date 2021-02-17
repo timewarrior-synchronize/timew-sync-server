@@ -34,40 +34,23 @@ func Sync(syncRequest data.SyncRequest, store storage.Storage) ([]data.Interval,
 	store.Lock(storage.UserId(syncRequest.UserID))
 	defer store.Unlock(storage.UserId(syncRequest.UserID))
 
-	// First, remove all intervals the client removed in its diff
+	// First, create a backup
 	backup, err := store.GetIntervals(storage.UserId(syncRequest.UserID))
 	if err != nil {
 		return nil, false, fmt.Errorf("fatal error: Could not retrieve stored intervals for backup. " +
 			"Stored state did not change")
 	}
-	for _, removedInterval := range syncRequest.Removed {
-		err = store.RemoveInterval(storage.UserId(syncRequest.UserID), removedInterval)
-		if err != nil {
-			restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // trying to restore backup
-			if restoreError != nil {
-				return nil, false, fmt.Errorf("fatal error: Failed to remove interval %v from storage. "+
-					"Also could not restore server state", removedInterval)
-			} else {
-				return nil, false, fmt.Errorf("fatal error: Failed to remove interval %v from storage. "+
-					"Stored state did not change", removedInterval)
-			}
 
-		}
-	}
-
-	// Then add all intervals the client added in its diff
-	for _, addedInterval := range syncRequest.Added {
-		err = store.AddInterval(storage.UserId(syncRequest.UserID), addedInterval)
-		if err != nil {
-			restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // trying to restore backup
-			if restoreError != nil {
-				return nil, false, fmt.Errorf("fatal error: Failed to add interval %v to storage. "+
-					"Also could not restore server state", addedInterval)
-			} else {
-				return nil, false, fmt.Errorf("fatal error: Failed to add interval %v to storage. "+
-					"Stored state did not change", addedInterval)
-			}
-
+	// Apply diff
+	diffErr := store.ModifyIntervals(storage.UserId(syncRequest.UserID), syncRequest.Added, syncRequest.Removed)
+	if diffErr != nil {
+		restoreError := store.SetIntervals(storage.UserId(syncRequest.UserID), backup) // try to restore backup
+		if restoreError != nil {
+			return nil, false, fmt.Errorf("fatal error: Failed to apply diff %v. "+
+				"Also could not restore server state", diffErr)
+		} else {
+			return nil, false, fmt.Errorf("fatal error: Failed to apply diff %v. "+
+				"Stored state unchanged", diffErr)
 		}
 	}
 
