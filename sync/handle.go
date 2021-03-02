@@ -29,32 +29,53 @@ import (
 // HandleSyncRequest receives sync requests and starts the sync
 // process with the received data.
 func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
-	requestBody, reqError := ioutil.ReadAll(req.Body)
-	if reqError != nil {
-		log.Printf("Error reading sync request. Ignoring request.")
+	requestBody, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Printf("Error reading HTTP request, ignoring request: %v", err)
 		return
 	}
-	requestData, parseError := data.ParseSyncRequest(string(requestBody))
-	if parseError != nil {
-		log.Printf("Error parsing sync request. Ignoring request.")
+
+	requestData, err := data.ParseSyncRequest(string(requestBody))
+	if err != nil {
+		log.Printf("Error parsing sync request, ignoring request: %v", err)
+		errorResponse := ErrorResponseBody{
+			Message: "An error occured while parsing the request",
+			Details: err.Error(),
+		}
+		sendResponse(w, http.StatusBadRequest, errorResponse.ToString())
 		return
 	}
+
 	syncData, conflict, err := Sync(requestData, storage.GlobalStorage)
 	if err != nil {
-		log.Printf("syncing failed")
-	}
-	responseBody, respError := data.ToJSON(syncData, conflict)
-	if respError != nil {
-		log.Printf("Error creating response JSON. Ignoring request.")
+		log.Printf("Synchronization failed, ignoring request: %v", err)
+		errorResponse := ErrorResponseBody{
+			Message: "An error occured while performing the synchronization",
+			Details: err.Error(),
+		}
+		sendResponse(w, http.StatusInternalServerError, errorResponse.ToString())
 		return
 	}
-	sendResponse(w, responseBody)
+
+	responseBody, err := data.ToJSON(syncData, conflict)
+	if err != nil {
+		log.Printf("Error creating response JSON, ignoring request: %v", err)
+		errorResponse := ErrorResponseBody{
+			Message: "An error occured while creating the response",
+			Details: err.Error(),
+		}
+		sendResponse(w, http.StatusInternalServerError, errorResponse.ToString())
+		return
+	}
+
+	sendResponse(w, http.StatusOK, responseBody)
 }
 
 // sendResponse writes data to response buffer
-func sendResponse(w http.ResponseWriter, data string) {
+func sendResponse(w http.ResponseWriter, statusCode int, data string) {
+	w.WriteHeader(statusCode)
 	_, err := io.WriteString(w, data)
 	if err != nil {
-		log.Printf("sync/handle.go:sendResponse Error writing response to ResponseWriter")
+		log.Printf("Error writing response to ResponseWriter")
 	}
 }
