@@ -18,6 +18,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package sync
 
 import (
+	"crypto"
+	"encoding/base64"
 	"fmt"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
@@ -128,19 +130,21 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 func GetKeySet(userId int) (jwk.Set, error) {
 	filename := fmt.Sprintf("%d_keys", userId)
 	path := filepath.Join(PublicKeyLocation, filename)
-	content, err := ioutil.ReadFile(path)
-	if err != nil {
-		log.Printf("Error obtaining key set of user %d. Key file not found: %v", userId, err)
-		return nil, err
-	}
-
-	keysSet, err := jwk.Parse(content, jwk.WithPEM(true))
+	keySet, err := jwk.ReadFile(path, jwk.WithPEM(true))
 	if err != nil {
 		log.Printf("Error parsing key set of user %d: %v", userId, err)
 		return nil, err
 	}
+	for i := 0; i < keySet.Len(); i++ {
+		key, ok := keySet.Get(i)
+		if ok {
+			tp, _ := key.Thumbprint(crypto.SHA1)
+			tpString := base64.StdEncoding.EncodeToString(tp)
+			key.Set("kid", interface{}(tpString))
+		}
+	}
 
-	return keysSet, nil
+	return keySet, nil
 }
 
 // sendResponse writes data to response buffer
