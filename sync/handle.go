@@ -22,6 +22,7 @@ import (
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
 	_ "github.com/lestrrat-go/jwx"
+	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 	"io"
@@ -62,11 +63,31 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 			sendResponse(w, http.StatusUnauthorized, errorResponse.ToString())
 			return
 		}
+		authed := false
+		for i := 0; i < keySet.Len(); i++ {
+			key, ok := keySet.Get(i)
+			if !ok {
+				continue
+			}
 
-		token, err := jwt.ParseHeader(req.Header, "Authorization", jwt.WithValidate(true),
-			jwt.WithKeySet(keySet))
-		if err != nil {
-			log.Printf("Error parsing JWT in request header: %v", err)
+			token, err := jwt.ParseHeader(req.Header, "Authorization", jwt.WithValidate(true),
+				jwt.WithVerify(jwa.RS256, key))
+			if err != nil {
+				continue
+			}
+
+			id, ok := token.Get("userID")
+			if !ok {
+				continue
+			}
+
+			presumedUserID, ok := id.(int)
+			if !ok || presumedUserID != requestData.UserID {
+				continue
+			}
+			authed = true
+		}
+		if !authed {
 			errorResponse := ErrorResponseBody{
 				Message: "An error occurred during authentication",
 				Details: "",
@@ -75,27 +96,6 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 			return
 		}
 
-		id, ok := token.Get("userID")
-		if !ok {
-			log.Printf("Error parsing JWT in request header. Unable to find claim userID")
-			errorResponse := ErrorResponseBody{
-				Message: "An error occurred during authentication",
-				Details: "",
-			}
-			sendResponse(w, http.StatusUnauthorized, errorResponse.ToString())
-			return
-		}
-
-		presumedUserID, ok := id.(int)
-		if !ok || presumedUserID != requestData.UserID {
-			log.Printf("Error confirming userID: Missmatching ids in body and jwt")
-			errorResponse := ErrorResponseBody{
-				Message: "An error occurred during authentication",
-				Details: "",
-			}
-			sendResponse(w, http.StatusUnauthorized, errorResponse.ToString())
-			return
-		}
 	}
 
 	syncData, conflict, err := Sync(requestData, storage.GlobalStorage)
@@ -128,7 +128,7 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 func GetKeySet(userId int) (jwk.Set, error) {
 	filename := fmt.Sprintf("%d_keys", userId)
 	path := filepath.Join(PublicKeyLocation, filename)
-	keySet, err := jwk.ReadFile(path)
+	keySet, err := jwk.ReadFile(path, jwk.WithPEM(true))
 	if err != nil {
 		log.Printf("Error parsing key set of user %d: %v", userId, err)
 		return nil, err
