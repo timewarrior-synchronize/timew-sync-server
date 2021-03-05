@@ -75,9 +75,9 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 			return
 		}
 
-		id, ok := token.Get("UserID")
+		id, ok := token.Get("userID")
 		if !ok {
-			log.Printf("Error parsing JWT in request header. Unable to find claim UserID")
+			log.Printf("Error parsing JWT in request header. Unable to find claim userID")
 			errorResponse := ErrorResponseBody{
 				Message: "An error occurred during authentication",
 				Details: "",
@@ -88,7 +88,7 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 
 		presumedUserID, ok := id.(int)
 		if !ok || presumedUserID != requestData.UserID {
-			log.Printf("Error confirming UserID: Missmatching ids in body and jwt")
+			log.Printf("Error confirming userID: Missmatching ids in body and jwt")
 			errorResponse := ErrorResponseBody{
 				Message: "An error occurred during authentication",
 				Details: "",
