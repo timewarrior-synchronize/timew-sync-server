@@ -63,7 +63,8 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 			return
 		}
 
-		token, err := jwt.ParseHeader(req.Header, "Authorization", jwt.WithValidate(true), jwt.WithKeySet(keySet))
+		token, err := jwt.ParseHeader(req.Header, "Authorization", jwt.WithValidate(true),
+			jwt.WithKeySet(keySet))
 		if err != nil {
 			log.Printf("Error parsing JWT in request header: %v", err)
 			errorResponse := ErrorResponseBody{
