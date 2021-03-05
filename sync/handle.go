@@ -30,6 +30,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"time"
 )
 
 var PublicKeyLocation string
@@ -71,7 +72,7 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 			}
 
 			token, err := jwt.ParseHeader(req.Header, "Authorization", jwt.WithValidate(true),
-				jwt.WithVerify(jwa.RS256, key))
+				jwt.WithVerify(jwa.RS256, key), jwt.WithAcceptableSkew(time.Duration(10e10)))
 			if err != nil {
 				continue
 			}
@@ -81,11 +82,12 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 				continue
 			}
 
-			presumedUserID, ok := id.(int)
-			if !ok || presumedUserID != requestData.UserID {
+			presumedUserID, ok := id.(float64)
+			if !ok || int(presumedUserID) != requestData.UserID {
 				continue
 			}
 			authed = true
+			break
 		}
 		if !authed {
 			errorResponse := ErrorResponseBody{
