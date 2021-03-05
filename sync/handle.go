@@ -18,17 +18,24 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package sync
 
 import (
+	"fmt"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	_ "github.com/lestrrat-go/jwx"
+	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/jwt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path/filepath"
 )
+
+var PublicKeyLocation string
 
 // HandleSyncRequest receives sync requests and starts the sync
 // process with the received data.
-func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
+func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 	requestBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("Error reading HTTP request, ignoring request: %v", err)
@@ -39,18 +46,62 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Printf("Error parsing sync request, ignoring request: %v", err)
 		errorResponse := ErrorResponseBody{
-			Message: "An error occured while parsing the request",
+			Message: "An error occurred while parsing the request",
 			Details: err.Error(),
 		}
 		sendResponse(w, http.StatusBadRequest, errorResponse.ToString())
 		return
+	}
+	if !noAuth {
+		keySet, err := GetKeySet(requestData.UserID)
+		if err != nil {
+			errorResponse := ErrorResponseBody{
+				Message: "An error occurred during authentication",
+				Details: "",
+			}
+			sendResponse(w, http.StatusUnauthorized, errorResponse.ToString())
+			return
+		}
+
+		token, err := jwt.ParseHeader(req.Header, "Authorization", jwt.WithValidate(true), jwt.WithKeySet(keySet))
+		if err != nil {
+			log.Printf("Error parsing JWT in request header: %v", err)
+			errorResponse := ErrorResponseBody{
+				Message: "An error occurred during authentication",
+				Details: "",
+			}
+			sendResponse(w, http.StatusUnauthorized, errorResponse.ToString())
+			return
+		}
+
+		id, ok := token.Get("UserID")
+		if !ok {
+			log.Printf("Error parsing JWT in request header. Unable to find claim UserID")
+			errorResponse := ErrorResponseBody{
+				Message: "An error occurred during authentication",
+				Details: "",
+			}
+			sendResponse(w, http.StatusUnauthorized, errorResponse.ToString())
+			return
+		}
+
+		presumedUserID, ok := id.(int)
+		if !ok || presumedUserID != requestData.UserID {
+			log.Printf("Error confirming UserID: Missmatching ids in body and jwt")
+			errorResponse := ErrorResponseBody{
+				Message: "An error occurred during authentication",
+				Details: "",
+			}
+			sendResponse(w, http.StatusUnauthorized, errorResponse.ToString())
+			return
+		}
 	}
 
 	syncData, conflict, err := Sync(requestData, storage.GlobalStorage)
 	if err != nil {
 		log.Printf("Synchronization failed, ignoring request: %v", err)
 		errorResponse := ErrorResponseBody{
-			Message: "An error occured while performing the synchronization",
+			Message: "An error occurred while performing the synchronization",
 			Details: err.Error(),
 		}
 		sendResponse(w, http.StatusInternalServerError, errorResponse.ToString())
@@ -61,7 +112,7 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Printf("Error creating response JSON, ignoring request: %v", err)
 		errorResponse := ErrorResponseBody{
-			Message: "An error occured while creating the response",
+			Message: "An error occurred while creating the response",
 			Details: err.Error(),
 		}
 		sendResponse(w, http.StatusInternalServerError, errorResponse.ToString())
@@ -69,6 +120,26 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
 	}
 
 	sendResponse(w, http.StatusOK, responseBody)
+}
+
+// GetKeySet returns the key set of user with userId. Returns an error if the keys file of that user was not found
+// or could not be parsed.
+func GetKeySet(userId int) (jwk.Set, error) {
+	filename := fmt.Sprintf("%d_keys", userId)
+	path := filepath.Join(PublicKeyLocation, filename)
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Printf("Error obtaining key set of user %d. Key file not found: %v", userId, err)
+		return nil, err
+	}
+
+	keysSet, err := jwk.Parse(content, jwk.WithPEM(true))
+	if err != nil {
+		log.Printf("Error parsing key set of user %d: %v", userId, err)
+		return nil, err
+	}
+
+	return keysSet, nil
 }
 
 // sendResponse writes data to response buffer

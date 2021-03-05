@@ -33,12 +33,18 @@ import (
 var versionFlag bool
 var configFilePath string
 var portNumber int
+var keyFilePath string
+var noAuth bool
 
 func main() {
 	flag.BoolVar(&versionFlag, "version", false, "Print version information")
 	flag.StringVar(&configFilePath, "config-file", "", "Path to the configuration file")
 	flag.IntVar(&portNumber, "port", 8080, "Port on which the server will listen for connections")
+	flag.StringVar(&keyFilePath, "keys-location", "authorized_keys", "Path to the users' public keys")
+	flag.BoolVar(&noAuth, "no-auth", false, "Run server without client authentication")
 	flag.Parse()
+
+	sync.PublicKeyLocation = keyFilePath
 
 	if versionFlag {
 		_, _ = fmt.Fprintf(os.Stderr, "timewarrior sync server version %v\n", "unreleased")
@@ -58,7 +64,10 @@ func main() {
 	}
 	storage.GlobalStorage = sqlStorage
 
-	http.HandleFunc("/api/sync", sync.HandleSyncRequest)
+	handler := func(w http.ResponseWriter, req *http.Request) {
+		sync.HandleSyncRequest(w, req, noAuth)
+	}
+	http.HandleFunc("/api/sync", handler)
 
 	log.Printf("Listening on Port %v", portNumber)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", portNumber), nil))
