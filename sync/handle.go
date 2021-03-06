@@ -18,19 +18,13 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package sync
 
 import (
-	"fmt"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
 	_ "github.com/lestrrat-go/jwx"
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwk"
-	"github.com/lestrrat-go/jwx/jwt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"path/filepath"
-	"time"
 )
 
 var PublicKeyLocation string
@@ -54,9 +48,11 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 		sendResponse(w, http.StatusBadRequest, errorResponse.ToString())
 		return
 	}
+
+	// Authentication
 	if !noAuth {
-		keySet, err := GetKeySet(requestData.UserID)
-		if err != nil {
+		authenticated := Authenticate(req, requestData)
+		if !authenticated {
 			errorResponse := ErrorResponseBody{
 				Message: "An error occurred during authentication",
 				Details: "",
@@ -64,40 +60,6 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 			sendResponse(w, http.StatusUnauthorized, errorResponse.ToString())
 			return
 		}
-		authed := false
-		for i := 0; i < keySet.Len(); i++ {
-			key, ok := keySet.Get(i)
-			if !ok {
-				continue
-			}
-
-			token, err := jwt.ParseHeader(req.Header, "Authorization", jwt.WithValidate(true),
-				jwt.WithVerify(jwa.RS256, key), jwt.WithAcceptableSkew(time.Duration(10e10)))
-			if err != nil {
-				continue
-			}
-
-			id, ok := token.Get("userID")
-			if !ok {
-				continue
-			}
-
-			presumedUserID, ok := id.(float64)
-			if !ok || int(presumedUserID) != requestData.UserID {
-				continue
-			}
-			authed = true
-			break
-		}
-		if !authed {
-			errorResponse := ErrorResponseBody{
-				Message: "An error occurred during authentication",
-				Details: "",
-			}
-			sendResponse(w, http.StatusUnauthorized, errorResponse.ToString())
-			return
-		}
-
 	}
 
 	syncData, conflict, err := Sync(requestData, storage.GlobalStorage)
@@ -123,20 +85,6 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 	}
 
 	sendResponse(w, http.StatusOK, responseBody)
-}
-
-// GetKeySet returns the key set of user with userId. Returns an error if the keys file of that user was not found
-// or could not be parsed.
-func GetKeySet(userId int) (jwk.Set, error) {
-	filename := fmt.Sprintf("%d_keys", userId)
-	path := filepath.Join(PublicKeyLocation, filename)
-	keySet, err := jwk.ReadFile(path, jwk.WithPEM(true))
-	if err != nil {
-		log.Printf("Error parsing key set of user %d: %v", userId, err)
-		return nil, err
-	}
-
-	return keySet, nil
 }
 
 // sendResponse writes data to response buffer
