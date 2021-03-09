@@ -30,7 +30,7 @@ import (
 )
 
 // Authenticate returns true iff the JWT specified in the HTTP requests' Bearer token was signed by the correct user.
-// If any step of the authentication process goes wrong or there is no matching public key Authenticate returns false
+// If any step of the authentication process fails or there is no matching public key, Authenticate returns false
 func Authenticate(r *http.Request, body data.SyncRequest) bool {
 	keySet, err := GetKeySet(body.UserID)
 	if err != nil {
