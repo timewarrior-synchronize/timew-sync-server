@@ -20,15 +20,18 @@ package sync
 import (
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	_ "github.com/lestrrat-go/jwx"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
 
+var PublicKeyLocation string
+
 // HandleSyncRequest receives sync requests and starts the sync
 // process with the received data.
-func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
+func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 	requestBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("Error reading HTTP request, ignoring request: %v", err)
@@ -39,18 +42,31 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Printf("Error parsing sync request, ignoring request: %v", err)
 		errorResponse := ErrorResponseBody{
-			Message: "An error occured while parsing the request",
+			Message: "An error occurred while parsing the request",
 			Details: err.Error(),
 		}
 		sendResponse(w, http.StatusBadRequest, errorResponse.ToString())
 		return
 	}
 
+	// Authentication
+	if !noAuth {
+		authenticated := Authenticate(req, requestData)
+		if !authenticated {
+			errorResponse := ErrorResponseBody{
+				Message: "An error occurred during authentication",
+				Details: "",
+			}
+			sendResponse(w, http.StatusUnauthorized, errorResponse.ToString())
+			return
+		}
+	}
+
 	syncData, conflict, err := Sync(requestData, storage.GlobalStorage)
 	if err != nil {
 		log.Printf("Synchronization failed, ignoring request: %v", err)
 		errorResponse := ErrorResponseBody{
-			Message: "An error occured while performing the synchronization",
+			Message: "An error occurred while performing the synchronization",
 			Details: err.Error(),
 		}
 		sendResponse(w, http.StatusInternalServerError, errorResponse.ToString())
@@ -61,7 +77,7 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Printf("Error creating response JSON, ignoring request: %v", err)
 		errorResponse := ErrorResponseBody{
-			Message: "An error occured while creating the response",
+			Message: "An error occurred while creating the response",
 			Details: err.Error(),
 		}
 		sendResponse(w, http.StatusInternalServerError, errorResponse.ToString())
