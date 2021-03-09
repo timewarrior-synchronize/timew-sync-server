@@ -64,7 +64,7 @@ func Authenticate(r *http.Request, body data.SyncRequest) bool {
 	return false
 }
 
-// GetKeySet returns the key set of user with userId. Returns an error if the keys file of that user was not found
+// GetKeySet returns the key set of user with a given userId. Returns an error if the keys file of that user was not found
 // or could not be parsed.
 func GetKeySet(userId int) (jwk.Set, error) {
 	filename := fmt.Sprintf("%d_keys", userId)
