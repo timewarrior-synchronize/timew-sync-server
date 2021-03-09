@@ -38,6 +38,13 @@ func Authenticate(r *http.Request, body data.SyncRequest) bool {
 		return false
 	}
 
+	return AuthenticateWithKeySet(r, body.UserID, keySet)
+
+}
+
+// AuthenticateWithKeySet returns true iff the JWT in the Bearer token can be validated in verified with a key in the
+// given key set
+func AuthenticateWithKeySet(r *http.Request, userID int, keySet jwk.Set) bool {
 	for i := 0; i < keySet.Len(); i++ {
 		key, ok := keySet.Get(i)
 		if !ok {
@@ -56,7 +63,7 @@ func Authenticate(r *http.Request, body data.SyncRequest) bool {
 		}
 
 		presumedUserID, ok := id.(float64)
-		if !ok || int(presumedUserID) != body.UserID {
+		if !ok || int(presumedUserID) != userID {
 			continue
 		}
 		return true
