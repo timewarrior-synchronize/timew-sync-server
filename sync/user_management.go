@@ -28,6 +28,8 @@ import (
 	"strings"
 )
 
+// GetUsedUserIDs returns a map containing every user id with an existing file [user id]_keys
+// in PublicKeyLocation directory
 func GetUsedUserIDs() map[int]bool {
 	files, err := ioutil.ReadDir(PublicKeyLocation)
 	if err != nil {
@@ -51,6 +53,7 @@ func GetUsedUserIDs() map[int]bool {
 	return used
 }
 
+// GetFreeUserID returns the smallest valid unused user id
 func GetFreeUserID() int {
 	used := GetUsedUserIDs()
 	for i := 0; i <= math.MaxInt64; i++ {
@@ -62,6 +65,7 @@ func GetFreeUserID() int {
 	return -1
 }
 
+// ReadKey reads the key from a file
 func ReadKey(path string) string {
 	key, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -70,6 +74,7 @@ func ReadKey(path string) string {
 	return string(key)
 }
 
+// AddKey adds the given key to the key file of the given user
 func AddKey(userID int, key string) {
 	if userID < 0 {
 		log.Fatal("Error adding key. Negative user id not allowed")
@@ -81,12 +86,16 @@ func AddKey(userID int, key string) {
 		log.Fatalf("Error adding key. Unable to create new key file or write to existing key file with user id %v", userID)
 	}
 	defer destFile.Close()
-
 	if key == "" {
 		return
 	}
-
-	key = "\n" + key
+	stat, err := destFile.Stat()
+	if err != nil {
+		log.Fatal("Unable to obtain kye file length")
+	}
+	if stat.Size() > 0 {
+		key = "\n" + key
+	}
 	if _, err = destFile.WriteString(key); err != nil {
 		destFile.Close()
 		log.Fatalf("Error adding key. Unable to write to key file with user id %v", userID)
