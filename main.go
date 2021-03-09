@@ -33,22 +33,76 @@ import (
 var versionFlag bool
 var configFilePath string
 var portNumber int
-var keyFilePath string
+var keyDirectoryPath string
 var noAuth bool
+var sourcePath string
+var userID int
 
 func main() {
+	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
+	addUserCmd := flag.NewFlagSet("add-user", flag.ExitOnError)
+	addKeyCmd := flag.NewFlagSet("add-key", flag.ExitOnError)
+
+	startCmd.StringVar(&configFilePath, "config-file", "", "Path to the configuration file")
+	startCmd.IntVar(&portNumber, "port", 8080, "Port on which the server will listen for connections")
+	startCmd.StringVar(&keyDirectoryPath, "keys-location", "authorized_keys", "Path to the users' public keys")
+	startCmd.BoolVar(&noAuth, "no-auth", false, "Run server without client authentication")
+
+	addUserCmd.StringVar(&sourcePath, "path", "", "Supply the path to a PEM RSA key")
+	addUserCmd.StringVar(&keyDirectoryPath, "keys-location", "authorized_keys", "Path to the users' public keys")
+
+	addKeyCmd.StringVar(&sourcePath, "path", "", "Supply the path to a PEM RSA key")
+	addKeyCmd.IntVar(&userID, "id", -1, "Supply user id")
+	addKeyCmd.StringVar(&keyDirectoryPath, "keys-location", "authorized_keys", "Path to the users' public keys")
+
 	flag.BoolVar(&versionFlag, "version", false, "Print version information")
-	flag.StringVar(&configFilePath, "config-file", "", "Path to the configuration file")
-	flag.IntVar(&portNumber, "port", 8080, "Port on which the server will listen for connections")
-	flag.StringVar(&keyFilePath, "keys-location", "authorized_keys", "Path to the users' public keys")
-	flag.BoolVar(&noAuth, "no-auth", false, "Run server without client authentication")
-	flag.Parse()
 
-	sync.PublicKeyLocation = keyFilePath
+	if len(os.Args) < 2 {
+		_, _ = fmt.Fprintf(os.Stderr, "Use commands start, add-user or add-key\n")
+		os.Exit(1)
+	}
 
-	if versionFlag {
-		_, _ = fmt.Fprintf(os.Stderr, "timewarrior sync server version %v\n", "unreleased")
+	switch os.Args[1] {
+	case "start":
+		_ = startCmd.Parse(os.Args[2:])
+		sync.PublicKeyLocation = keyDirectoryPath
+	case "add-user":
+		_ = addUserCmd.Parse(os.Args[2:])
+		sync.PublicKeyLocation = keyDirectoryPath
+		id := sync.GetFreeUserID()
+		if sourcePath == "" {
+			sync.AddKey(id, "")
+		} else {
+			key := sync.ReadKey(sourcePath)
+			sync.AddKey(id, key)
+		}
+		_, _ = fmt.Fprintf(os.Stderr, "Successfully added new user %v", id)
 		os.Exit(0)
+	case "add-key":
+		_ = addKeyCmd.Parse(os.Args[2:])
+		sync.PublicKeyLocation = keyDirectoryPath
+		if sourcePath == "" {
+			log.Fatal("Provide a key file with --path [path-to-key-file]")
+		}
+		if userID < 0 {
+			log.Fatal("Provide a non-negative user id with --id [user id]")
+		}
+		used := sync.GetUsedUserIDs()
+		if !used[userID] {
+			log.Fatalf("User %v does not exist", userID)
+		}
+		key := sync.ReadKey(sourcePath)
+		sync.AddKey(userID, key)
+		_, _ = fmt.Fprintf(os.Stderr, "Successfully added new key to user %v", userID)
+		os.Exit(0)
+	default:
+		flag.Parse()
+		if versionFlag {
+			_, _ = fmt.Fprintf(os.Stderr, "timewarrior sync server version %v\n", "unreleased")
+			os.Exit(0)
+		} else {
+			log.Fatal("Use commands start, add-user or add-key")
+		}
 	}
 
 	db, err := sql.Open("sqlite3", "./db.sqlite")
