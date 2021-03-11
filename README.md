@@ -10,7 +10,7 @@ First you need to build the server:
 go build -o timew-server
 ```
 
-If you haven't already, create a folder named `authorized_keys` in the same folder, as your executable:
+If you haven't already, create a folder named `authorized_keys` in the same folder as your executable:
 ```sh
 mkdir authorized_keys
 ```
@@ -55,7 +55,7 @@ The `start` subcommand supports the following (optional) flags:
 - `--config-file`: Specifies the path to the configuration file
 - `--port`: Specifies the port. Default: 8080
 - `--keys-location`: Specifies the folder holding the authorized keys. Default: `authorized_keys`
-- `--no-auth`: Deactivates client authentication.
+- `--no-auth`: Deactivates client authentication. Only for testing purposes.
 
 ## Adding users
 
@@ -100,7 +100,5 @@ The code has to be formatted using `go fmt` before commits. To enforce this, we 
 
 ```sh
 cp git/hooks/pre-commit .git/hooks/pre-commit
-
-chmod +x .git/hooks/pre-commit
 ```
 
