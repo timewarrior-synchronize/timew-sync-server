@@ -30,7 +30,7 @@ docker build -t timew-server .
 
 To start the server, use:
 ```sh
-# Running from the docker image tagged timew-server 
+# Running from the docker image tagged timew-server
 docker run -p 8080:8080 timew-server
 
 # Start an existing docker container
@@ -82,7 +82,7 @@ New keys can be added using the `add-key` subcommand:
 The `add-key` subcommand supports the following flags:
 - `--path` (**required**): Specifies the path to a public key and associates it with the user.
 - `--id` (**required**): Specifies the user id.
-- `--keys-location`: Specifies the folder holding the authorized keys. Defualt: `authorized_keys`
+- `--keys-location`: Specifies the folder holding the authorized keys. Default: `authorized_keys`
 
 **Note:** If you are running the server inside a docker container, you have to copy the key into the container first:
 
@@ -101,4 +101,3 @@ The code has to be formatted using `go fmt` before commits. To enforce this, we 
 ```sh
 cp git/hooks/pre-commit .git/hooks/pre-commit
 ```
-
