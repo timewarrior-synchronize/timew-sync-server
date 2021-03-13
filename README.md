@@ -20,6 +20,17 @@ Now you can start using your server:
 ./timew-server start
 ```
 
+## Using Nix
+
+To install `timew-sync-server` into your current environment, use:
+
+```sh
+nix-env -f default.nix -i
+```
+
+Then, follow the instructions above (create a directory for the keys
+and start the server).
+
 ## Using docker
 
 You can build a docker image using the provided `Dockerfile`:
