@@ -138,3 +138,27 @@ func TestEphemeral_ModifyIntervals_add(t *testing.T) {
 		}
 	}
 }
+
+func TestEphemeral_AddInterval(t *testing.T) {
+	var s Storage
+
+	add := data.Interval{
+		Start:      time.Date(2020, 01, 01, 12, 0, 0, 0, time.UTC),
+		End:        time.Date(2020, 01, 01, 13, 0, 0, 0, time.UTC),
+		Tags:       []string{"Tag3", "Tag4"},
+		Annotation: "Annotation2",
+	}
+
+	s = &Ephemeral{}
+	_ = s.Initialize()
+	_ = s.AddInterval(0, add)
+	result, _ := s.GetIntervals(0)
+
+	if len(result) != 1 {
+		t.Errorf("length doesn't match, expected %v, got %v", 1, len(result))
+	}
+
+	if diff := cmp.Diff(add, result[0]); diff != "" {
+		t.Errorf("result: %v not as expected: %v", result, add)
+	}
+}
