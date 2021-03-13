@@ -89,7 +89,9 @@ func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
 
 // sendResponse writes data to response buffer
 func sendResponse(w http.ResponseWriter, statusCode int, data string) {
+	w.Header().Set("content-type", "application/json; charset=utf-8")
 	w.WriteHeader(statusCode)
+
 	_, err := io.WriteString(w, data)
 	if err != nil {
 		log.Printf("Error writing response to ResponseWriter")
