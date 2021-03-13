@@ -68,6 +68,10 @@ func (ep *Ephemeral) SetIntervals(userId UserId, intervals []data.Interval) erro
 
 // AddInterval adds a single interval to the intervals stored for a user
 func (ep *Ephemeral) AddInterval(userId UserId, interval data.Interval) error {
+	if ep.intervals[userId] == nil {
+		ep.intervals[userId] = make(intervalSet)
+	}
+
 	ep.intervals[userId][IntervalToKey(interval)] = true
 	log.Printf("ephemeral: Added an Interval to User %v\n", userId)
 
@@ -89,6 +93,9 @@ func (ep *Ephemeral) ModifyIntervals(userId UserId, add []data.Interval, del []d
 		delete(ep.intervals[userId], IntervalToKey(interval))
 	}
 
+	if ep.intervals[userId] == nil {
+		ep.intervals[userId] = make(intervalSet, len(add))
+	}
 	for _, interval := range add {
 		ep.intervals[userId][IntervalToKey(interval)] = true
 	}
