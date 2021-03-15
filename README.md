@@ -112,3 +112,9 @@ The code has to be formatted using `go fmt` before commits. To enforce this, we 
 ```sh
 cp git/hooks/pre-commit .git/hooks/pre-commit
 ```
+
+# Acknowledgements
+This project was developed during the so called "Bachelorpraktikum" at TU Darmstadt. It was supervised by the Department of Biology, [Computer-aided Synthetic Biology](https://www.bio.tu-darmstadt.de/forschung/ressearch_groups/Kabisch_Start.en.jsp). For more information visit [kabisch-lab.de](http://kabisch-lab.de).
+
+This work was supported by the BMBF-funded de.NBI Cloud within the German Network for Bioinformatics Infrastructure (de.NBI) (031A532B, 031A533A, 031A533B, 031A534A, 031A535A, 031A537A, 031A537B, 031A537C, 031A537D, 031A538A).
+
