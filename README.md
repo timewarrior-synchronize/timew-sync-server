@@ -63,7 +63,7 @@ Start the server using the `start` subcommand:
 ```
 
 The `start` subcommand supports the following (optional) flags:
-- `--config-file`: Specifies the path to the configuration file
+- `--config-file`: (reserved, not used yet) Specifies the path to the configuration file
 - `--port`: Specifies the port. Default: 8080
 - `--keys-location`: Specifies the folder holding the authorized keys. Default: `authorized_keys`
 - `--no-auth`: Deactivates client authentication. Only for testing purposes.
