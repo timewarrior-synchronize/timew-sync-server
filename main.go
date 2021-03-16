@@ -43,7 +43,7 @@ func main() {
 	addUserCmd := flag.NewFlagSet("add-user", flag.ExitOnError)
 	addKeyCmd := flag.NewFlagSet("add-key", flag.ExitOnError)
 
-	startCmd.StringVar(&configFilePath, "config-file", "", "Path to the configuration file")
+	startCmd.StringVar(&configFilePath, "config-file", "", "[RESERVED, not used] Path to the configuration file")
 	startCmd.IntVar(&portNumber, "port", 8080, "Port on which the server will listen for connections")
 	startCmd.StringVar(&keyDirectoryPath, "keys-location", "authorized_keys", "Path to the users' public keys")
 	startCmd.BoolVar(&noAuth, "no-auth", false, "Run server without client authentication")
