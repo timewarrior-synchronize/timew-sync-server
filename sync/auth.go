@@ -19,10 +19,10 @@ package sync
 
 import (
 	"fmt"
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"log"
 	"net/http"
 	"path/filepath"

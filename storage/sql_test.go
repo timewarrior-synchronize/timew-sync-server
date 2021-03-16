@@ -18,8 +18,8 @@ package storage
 
 import (
 	"fmt"
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
 	"github.com/google/go-cmp/cmp"
+	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"testing"
 	"time"
 
