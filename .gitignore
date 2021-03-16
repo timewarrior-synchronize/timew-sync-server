@@ -15,3 +15,12 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Project related
+
+authorized_keys/*
+!authorized_keys/.gitkeep
+
+# Database
+*.sqlite
+

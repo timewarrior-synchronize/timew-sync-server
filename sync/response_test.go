@@ -14,29 +14,24 @@ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEM
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 package sync
 
 import (
-	"net/http"
-	"net/http/httptest"
+	"github.com/google/go-cmp/cmp"
 	"testing"
 )
 
-func TestSendResponse(t *testing.T) {
-	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	rr := httptest.NewRecorder()
-	sendResponse(rr, http.StatusOK, "test")
-	// Check the status code is what we expect.
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
+func TestToString(t *testing.T) {
+	testInput := ErrorResponseBody{
+		Message: "Houston, we have a problem",
+		Details: "We've had a Main B Bus Undervolt.",
 	}
 
-	// Check the response body is what we expect.
-	expected := `test`
-	if rr.Body.String() != expected {
-		t.Errorf("handler returned unexpected body: got %v want %v",
-			rr.Body.String(), expected)
+	expected := `{"message":"Houston, we have a problem","details":"We've had a Main B Bus Undervolt."}`
+
+	result := testInput.ToString()
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("Result differs from expected: \n%s", diff)
 	}
 }

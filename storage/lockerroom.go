@@ -14,29 +14,41 @@ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEM
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
-package sync
+package storage
 
 import (
-	"net/http"
-	"net/http/httptest"
-	"testing"
+	"sync"
 )
 
-func TestSendResponse(t *testing.T) {
-	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-	rr := httptest.NewRecorder()
-	sendResponse(rr, http.StatusOK, "test")
-	// Check the status code is what we expect.
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
-	}
+// A LockerRoom is a collection of Mutexes mapped to user ids
+type LockerRoom struct {
+	globalLock sync.Mutex
+	locks      map[UserId]*sync.Mutex
+}
 
-	// Check the response body is what we expect.
-	expected := `test`
-	if rr.Body.String() != expected {
-		t.Errorf("handler returned unexpected body: got %v want %v",
-			rr.Body.String(), expected)
+// Sets up this LockerRoom instance
+func (lr *LockerRoom) InitializeLockerRoom() {
+	lr.locks = make(map[UserId]*sync.Mutex)
+}
+
+// Creates an entry into the locks map if the user does not exist yet
+func (lr *LockerRoom) createUserIfNotExists(userId UserId) {
+	lr.globalLock.Lock()
+	defer lr.globalLock.Unlock()
+
+	if lr.locks[userId] == nil {
+		lr.locks[userId] = &sync.Mutex{}
 	}
+}
+
+// Acquire the lock for this user id
+func (lr *LockerRoom) Lock(userId UserId) {
+	lr.createUserIfNotExists(userId)
+
+	lr.locks[userId].Lock()
+}
+
+// Release the lock for this user id
+func (lr *LockerRoom) Unlock(userId UserId) {
+	lr.locks[userId].Unlock()
 }

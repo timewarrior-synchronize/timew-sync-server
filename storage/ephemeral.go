@@ -1,5 +1,5 @@
 /*
-Copyright 2020 - Jan Bormet, Anna-Felicitas Hausmann, Joachim Schmidt, Vincent Stollenwerk, Arne Turuc
+Copyright 2020 - 2021, Jan Bormet, Anna-Felicitas Hausmann, Joachim Schmidt, Vincent Stollenwerk, Arne Turuc
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -17,21 +17,90 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 package storage
 
-// EphemeralStorage represents storage of user interval data.
+import (
+	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
+	"log"
+)
+
+// Ephemeral represents storage of user interval data.
 // It contains the time intervals.
 // Each interval is represented as a string in intervals.
 // Data is not stored persistently.
-type EphemeralStorage struct {
-	intervals []string
+type Ephemeral struct {
+	LockerRoom
+	intervals map[UserId]intervalSet
 }
 
-// GetIntervals
-// getter for intervals field of EphemeralStorage struct
-func (es EphemeralStorage) GetIntervals() []string {
-	return es.intervals
+// intervalSet represents a set of intervals
+type intervalSet map[IntervalKey]bool
+
+// Initialize runs all necessary setup for this Storage instance
+func (ep *Ephemeral) Initialize() error {
+	ep.intervals = make(map[UserId]intervalSet)
+	ep.InitializeLockerRoom()
+	return nil
 }
 
-// OverwriteIntervals sets intervals field of given EphemeralStorage struct
-func (es *EphemeralStorage) OverwriteIntervals(intervals []string) {
-	es.intervals = intervals
+// GetIntervals returns all intervals stored for a specific user
+func (ep *Ephemeral) GetIntervals(userId UserId) ([]data.Interval, error) {
+	intervals := make([]IntervalKey, len(ep.intervals[userId]))
+
+	i := 0
+	for interval := range ep.intervals[userId] {
+		intervals[i] = interval
+		i++
+	}
+
+	return ConvertToIntervals(intervals), nil
+}
+
+// SetIntervals replaces all intervals of a specific user
+func (ep *Ephemeral) SetIntervals(userId UserId, intervals []data.Interval) error {
+	keys := ConvertToKeys(intervals)
+	ep.intervals[userId] = make(intervalSet, len(keys))
+	for _, key := range keys {
+		ep.intervals[userId][key] = true
+	}
+	log.Printf("ephemeral: Set Intervals of User %v\n", userId)
+
+	return nil
+}
+
+// AddInterval adds a single interval to the intervals stored for a user
+func (ep *Ephemeral) AddInterval(userId UserId, interval data.Interval) error {
+	if ep.intervals[userId] == nil {
+		ep.intervals[userId] = make(intervalSet)
+	}
+
+	ep.intervals[userId][IntervalToKey(interval)] = true
+	log.Printf("ephemeral: Added an Interval to User %v\n", userId)
+
+	return nil
+}
+
+// RemoveInterval removes an interval from the intervals stored for a user
+func (ep *Ephemeral) RemoveInterval(userId UserId, interval data.Interval) error {
+	delete(ep.intervals[userId], IntervalToKey(interval))
+	log.Printf("ephemeral: Removed an Interval of User %v\n", userId)
+
+	return nil
+}
+
+// ModifyIntervals atomically adds and deletes a specified set
+// of intervals
+func (ep *Ephemeral) ModifyIntervals(userId UserId, add []data.Interval, del []data.Interval) error {
+	for _, interval := range del {
+		delete(ep.intervals[userId], IntervalToKey(interval))
+	}
+
+	if ep.intervals[userId] == nil {
+		ep.intervals[userId] = make(intervalSet, len(add))
+	}
+	for _, interval := range add {
+		ep.intervals[userId][IntervalToKey(interval)] = true
+	}
+
+	log.Printf("ephemeral: Modified Intervals of User %v\n", userId)
+
+	return nil
 }
