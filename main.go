@@ -73,7 +73,7 @@ func main() {
 	default:
 		flag.Parse()
 		if versionFlag {
-			_, _ = fmt.Fprintf(os.Stderr, "timewarrior sync server version %v\n", "unreleased")
+			_, _ = fmt.Fprintf(os.Stderr, "timewarrior sync server version %v\n", "1.0.0")
 			os.Exit(0)
 		} else {
 			log.Fatal("Use commands start, add-user or add-key")
