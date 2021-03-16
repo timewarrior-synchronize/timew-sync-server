@@ -1,7 +1,0 @@
-#### Description
-
-
-
-#### Acceptance criteria
-
-

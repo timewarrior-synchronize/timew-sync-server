@@ -18,8 +18,8 @@ package sync
 
 import (
 	"fmt"
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/data"
-	"git.rwth-aachen.de/computer-aided-synthetic-biology/bachelorpraktika/2020-67-timewarrior-sync/timew-sync-server/storage"
+	"github.com/timewarrior-synchronize/timew-sync-server/data"
+	"github.com/timewarrior-synchronize/timew-sync-server/storage"
 	"reflect"
 	"testing"
 	"time"
