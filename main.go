@@ -34,6 +34,7 @@ var versionFlag bool
 var configFilePath string
 var portNumber int
 var keyDirectoryPath string
+var dbPath string
 var noAuth bool
 var sourcePath string
 var userID int
@@ -46,6 +47,7 @@ func main() {
 	startCmd.StringVar(&configFilePath, "config-file", "", "[RESERVED, not used] Path to the configuration file")
 	startCmd.IntVar(&portNumber, "port", 8080, "Port on which the server will listen for connections")
 	startCmd.StringVar(&keyDirectoryPath, "keys-location", "authorized_keys", "Path to the users' public keys")
+	startCmd.StringVar(&dbPath, "sqlite-db", "db.sqlite", "Path to the SQLite database")
 	startCmd.BoolVar(&noAuth, "no-auth", false, "Run server without client authentication")
 
 	addUserCmd.StringVar(&sourcePath, "path", "", "Supply the path to a PEM RSA key")
@@ -80,7 +82,7 @@ func main() {
 		}
 	}
 
-	db, err := sql.Open("sqlite3", "./db.sqlite")
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		log.Fatalf("Error while opening SQLite database: %v", err)
 	}

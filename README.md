@@ -67,6 +67,7 @@ The `start` subcommand supports the following (optional) flags:
 - `--port`: Specifies the port. Default: 8080
 - `--keys-location`: Specifies the folder holding the authorized keys. Default: `authorized_keys`
 - `--no-auth`: Deactivates client authentication. Only for testing purposes.
+- `--sqlite-db`: Path to the sqlite database. Default: `db.sqlite`
 
 ## Adding users
 
