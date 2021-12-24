@@ -22,10 +22,11 @@ Now you can start using your server:
 
 ## Using Nix
 
-To install `timew-sync-server` into your current environment, use:
+`timew-sync-server` is included in Nixpkgs.  To install
+`timew-sync-server` into your current environment, use:
 
 ```sh
-nix-env -f default.nix -i
+nix-env -i timew-sync-server
 ```
 
 Then, follow the instructions above (create a directory for the keys
