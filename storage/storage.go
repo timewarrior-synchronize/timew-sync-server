@@ -26,7 +26,7 @@ import (
 
 // A UserId represents a unique ID assigned to each user of the
 // timewarrior sync server
-type UserId int
+type UserId int64
 
 type IntervalKey struct {
 	Start      time.Time

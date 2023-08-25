@@ -37,7 +37,7 @@ var keyDirectoryPath string
 var dbPath string
 var noAuth bool
 var sourcePath string
-var userID int
+var userID int64
 
 func main() {
 	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
@@ -54,7 +54,7 @@ func main() {
 	addUserCmd.StringVar(&keyDirectoryPath, "keys-location", "authorized_keys", "Path to the users' public keys")
 
 	addKeyCmd.StringVar(&sourcePath, "path", "", "Supply the path to a PEM RSA key")
-	addKeyCmd.IntVar(&userID, "id", -1, "Supply user id")
+	addKeyCmd.Int64Var(&userID, "id", -1, "Supply user id")
 	addKeyCmd.StringVar(&keyDirectoryPath, "keys-location", "authorized_keys", "Path to the users' public keys")
 
 	flag.BoolVar(&versionFlag, "version", false, "Print version information")

@@ -27,7 +27,7 @@ import (
 // SolveConflict merges overlapping intervals of given user.
 // It then updates userId's state in store accordingly
 // SolveConflict returns true iff a conflict was detected
-func SolveConflict(userId int, store storage.Storage) (bool, error) {
+func SolveConflict(userId int64, store storage.Storage) (bool, error) {
 	conflictDetected := false
 	intervals, err := store.GetIntervals(storage.UserId(userId))
 

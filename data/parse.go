@@ -26,7 +26,7 @@ import (
 // It contains the unique client id and an interval diff, stating added and removed intervals as strings.
 // It is (and should) only be used for JSON parsing.
 type JSONRequest struct {
-	UserID  int            `json:"userID"`
+	UserID  int64          `json:"userID"`
 	Added   []JSONInterval `json:"added"`
 	Removed []JSONInterval `json:"removed"`
 }
@@ -35,7 +35,7 @@ type JSONRequest struct {
 // It contains the id of the user who is syncing
 // and its interval diff.
 type SyncRequest struct {
-	UserID  int
+	UserID  int64
 	Added   []Interval
 	Removed []Interval
 }
