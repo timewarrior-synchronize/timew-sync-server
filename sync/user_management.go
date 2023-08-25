@@ -30,19 +30,19 @@ import (
 
 // GetUsedUserIDs returns a map containing every user id with an existing file [user id]_keys
 // in PublicKeyLocation directory
-func GetUsedUserIDs() map[int]bool {
+func GetUsedUserIDs() map[int64]bool {
 	files, err := ioutil.ReadDir(PublicKeyLocation)
 	if err != nil {
 		log.Fatal("Error accessing keys-location directory")
 	}
-	used := make(map[int]bool)
+	used := make(map[int64]bool)
 
 	for _, f := range files {
 		s := strings.Split(f.Name(), "_")
 		if len(s) != 2 {
 			continue
 		}
-		i, err := strconv.Atoi(s[0])
+		i, err := strconv.ParseInt(s[0], 10, 64)
 		if err != nil {
 			continue
 		}
@@ -54,9 +54,9 @@ func GetUsedUserIDs() map[int]bool {
 }
 
 // GetFreeUserID returns the smallest valid unused user id
-func GetFreeUserID() int {
+func GetFreeUserID() int64 {
 	used := GetUsedUserIDs()
-	for i := 0; i <= math.MaxInt64; i++ {
+	for i := int64(0); i <= math.MaxInt64; i++ {
 		if !used[i] {
 			return i
 		}
@@ -75,7 +75,7 @@ func ReadKey(path string) string {
 }
 
 // AddKey adds the given key to the key file of the given user
-func AddKey(userID int, key string) {
+func AddKey(userID int64, key string) {
 	if userID < 0 {
 		log.Fatal("Error adding key. Negative user id not allowed")
 	}
