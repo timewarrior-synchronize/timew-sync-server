@@ -1,0 +1,51 @@
+[Unit]
+Description=timewarrior synchronization server
+
+[Service]
+User=timew-sync-server
+Group=timew-sync-server
+Type=simple
+
+###############################################################################
+#                                                                             #
+# Replace this with the path to the actual binary and port you want to use.   #
+#                                                                             #
+# Always run timew-sync-server behind a reverse proxy when exposed publicly.  #
+#                                                                             #
+###############################################################################
+ExecStart=/usr/bin/timew-sync-server start -port 8710
+Restart=always
+RestartSec=5
+
+###############################################################################
+#                                                                             #
+# Systemd will create the data directory for timew-sync-server with the       #
+# appropriate permissions. Remember back up the contents of this directory.   #
+#                                                                             #
+###############################################################################
+StateDirectory=timew-sync-server
+StateDirectoryMode=0700
+WorkingDirectory=/var/lib/timew-sync-server
+
+CapabilityBoundingSet=
+LockPersonality=true
+MemoryDenyWriteExecute=true
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateMounts=true
+PrivateTmp=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_INET
+RestrictAddressFamilies=AF_INET6
+RestrictRealtime=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target
