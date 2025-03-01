@@ -19,10 +19,17 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"fmt"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/sqlite3"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"log"
 )
+
+//go:embed migrations/*.sql
+var migrationsFS embed.FS
 
 type Sql struct {
 	LockerRoom
@@ -33,20 +40,28 @@ type Sql struct {
 func (s *Sql) Initialize() error {
 	s.InitializeLockerRoom()
 
-	q := `
-CREATE TABLE IF NOT EXISTS interval (
-    user_id integer NOT NULL,
-    start_time datetime NOT NULL,
-    end_time datetime NOT NULL,
-    tags text,
-    annotation text,
-    PRIMARY KEY (user_id, start_time, end_time, tags, annotation)
-);
-`
-	_, err := s.DB.Exec(q)
+	d, err := iofs.New(migrationsFS, "migrations")
 	if err != nil {
-		log.Fatalf("Error while initializing database: %v", err)
+		log.Fatalf("Error loading database migrations: %v", err)
 	}
+
+	instance, err := sqlite3.WithInstance(s.DB, &sqlite3.Config{})
+	if err != nil {
+		log.Fatalf("Error connecting to database for migrations: %v", err)
+	}
+
+	m, err := migrate.NewWithInstance("iofs", d, "sqlite3", instance)
+	if err != nil {
+		log.Fatalf("Error setting up database migrations: %v", err)
+	}
+
+	err = m.Up()
+	if err != nil {
+		if err != migrate.ErrNoChange {
+			log.Fatalf("Error running database migrations: %v", err)
+		}
+	}
+
 	return nil
 }
 
