@@ -1,12 +1,11 @@
 module github.com/timewarrior-synchronize/timew-sync-server
 
 go 1.22.0
-
 toolchain go1.24.1
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/golang-migrate/migrate/v4 v4.18.2
+	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/go-cmp v0.7.0
 	github.com/lestrrat-go/jwx v1.2.31
 	github.com/mattn/go-sqlite3 v1.14.28
@@ -24,5 +23,5 @@ require (
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
-	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
 )
