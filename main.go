@@ -95,10 +95,15 @@ func main() {
 	}
 	storage.GlobalStorage = sqlStorage
 
-	handler := func(w http.ResponseWriter, req *http.Request) {
+	syncHandler := func(w http.ResponseWriter, req *http.Request) {
 		sync.HandleSyncRequest(w, req, noAuth)
 	}
-	http.HandleFunc("/api/sync", handler)
+	healthHandler := func(w http.ResponseWriter, req *http.Request) {
+                fmt.Fprint(w, "OK")
+	}
+
+	http.HandleFunc("/api/sync", syncHandler)
+	http.HandleFunc("/api/health", healthHandler)
 
 	log.Printf("Listening on Port %v", portNumber)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", portNumber), nil))
