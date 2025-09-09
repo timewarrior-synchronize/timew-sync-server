@@ -81,7 +81,7 @@ If no additional flags are specified, this command will return the new user id.
 
 The `add-user` subcommand supports the following flags:
 - `--path`: Specifies the path to a public key and associates it with the user.
-- `--keys-loaction`: Specifies the folder holding the authorized keys. Default: `authorized_keys`
+- `--keys-location`: Specifies the folder holding the authorized keys. Default: `authorized_keys`
 
 **Note:** If you are running our provided Docker image, see the note under `Adding keys to users`.
 
