@@ -9,7 +9,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/google/go-cmp v0.7.0
 	github.com/lestrrat-go/jwx v1.2.31
-	github.com/mattn/go-sqlite3 v1.14.28
+	github.com/mattn/go-sqlite3 v1.14.32
 )
 
 require (
