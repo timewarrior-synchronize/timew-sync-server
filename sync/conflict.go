@@ -19,9 +19,10 @@ package sync
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"github.com/timewarrior-synchronize/timew-sync-server/storage"
-	"sort"
 )
 
 // SolveConflict merges overlapping intervals of given user.

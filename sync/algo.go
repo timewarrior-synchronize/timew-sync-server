@@ -19,14 +19,15 @@ package sync
 
 import (
 	"fmt"
+
 	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"github.com/timewarrior-synchronize/timew-sync-server/storage"
 )
 
 // Sync updates the stored state in passed storage.Storage for the user issuing the sync request. If something fails it
-//tries to restore the state
+// tries to restore the state
 // prior to the syncRequest. This is not always possible though. The error message denotes whether restoring state was
-//successful.
+// successful.
 // Later atomicity should be guaranteed by storage.
 // Iff no errors occur Sync returns the synced interval data of the user issuing the sync request.
 func Sync(syncRequest data.SyncRequest, store storage.Storage) ([]data.Interval, bool, error) {

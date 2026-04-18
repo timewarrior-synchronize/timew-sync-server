@@ -18,10 +18,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package storage
 
 import (
-	"github.com/google/go-cmp/cmp"
-	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/timewarrior-synchronize/timew-sync-server/data"
 )
 
 func TestEphemeralStorage(t *testing.T) {

@@ -18,11 +18,12 @@ package sync
 
 import (
 	"fmt"
-	"github.com/timewarrior-synchronize/timew-sync-server/data"
-	"github.com/timewarrior-synchronize/timew-sync-server/storage"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/timewarrior-synchronize/timew-sync-server/data"
+	"github.com/timewarrior-synchronize/timew-sync-server/storage"
 )
 
 func elementwiseEqual(aSlice []data.Interval, bSlice []data.Interval) bool {

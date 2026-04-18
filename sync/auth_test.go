@@ -20,12 +20,13 @@ package sync
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwk"
-	"github.com/lestrrat-go/jwx/jwt"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/lestrrat-go/jwx/jwa"
+	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/jwt"
 )
 
 func TestAuthenticateWithKeySet_positive(t *testing.T) {

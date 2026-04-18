@@ -18,8 +18,9 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package storage
 
 import (
-	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"log"
+
+	"github.com/timewarrior-synchronize/timew-sync-server/data"
 )
 
 // Ephemeral represents storage of user interval data.

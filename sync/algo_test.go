@@ -17,20 +17,18 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package sync
 
 import (
-	"github.com/timewarrior-synchronize/timew-sync-server/data"
-	"github.com/timewarrior-synchronize/timew-sync-server/storage"
+	"slices"
+
 	"testing"
 	"time"
+
+	"github.com/timewarrior-synchronize/timew-sync-server/data"
+	"github.com/timewarrior-synchronize/timew-sync-server/storage"
 )
 
 func contains(slice []data.Interval, interval data.Interval) bool {
 	keySlice := storage.ConvertToKeys(slice)
-	for _, a := range keySlice {
-		if a == storage.IntervalToKey(interval) {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(keySlice, storage.IntervalToKey(interval))
 }
 
 func TestSync(t *testing.T) {

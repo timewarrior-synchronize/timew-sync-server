@@ -18,13 +18,13 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package sync
 
 import (
+	"io"
+	"log"
+	"net/http"
+
 	_ "github.com/lestrrat-go/jwx"
 	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"github.com/timewarrior-synchronize/timew-sync-server/storage"
-	"io"
-	"io/ioutil"
-	"log"
-	"net/http"
 )
 
 var PublicKeyLocation string
@@ -32,7 +32,7 @@ var PublicKeyLocation string
 // HandleSyncRequest receives sync requests and starts the sync
 // process with the received data.
 func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
-	requestBody, err := ioutil.ReadAll(req.Body)
+	requestBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("Error reading HTTP request, ignoring request: %v", err)
 		return

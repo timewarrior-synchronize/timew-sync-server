@@ -18,9 +18,10 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package data
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestInterval_JSONConversion(t *testing.T) {
@@ -56,7 +57,7 @@ func TestInterval_Serialize(t *testing.T) {
 
 func TestIntervalsToStrings(t *testing.T) {
 	loc, _ := time.LoadLocation("UTC")
-	testData := make([]Interval, 3, 3)
+	testData := make([]Interval, 3)
 	testData[0] = Interval{
 		Start: time.Date(2020, 11, 25, 9, 39, 10, 0, loc),
 		End:   time.Date(2020, 11, 25, 9, 39, 43, 0, loc),

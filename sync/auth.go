@@ -19,14 +19,15 @@ package sync
 
 import (
 	"fmt"
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwk"
-	"github.com/lestrrat-go/jwx/jwt"
-	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"log"
 	"net/http"
 	"path/filepath"
 	"time"
+
+	"github.com/lestrrat-go/jwx/jwa"
+	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/timewarrior-synchronize/timew-sync-server/data"
 )
 
 // Authenticate returns true iff the JWT specified in the HTTP requests' Bearer token was signed by the correct user.

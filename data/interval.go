@@ -136,7 +136,7 @@ func (interval Interval) String() string {
 // IntervalsToStrings converts a slice of Interval structs to a slice of the corresponding timewarrior interval strings
 // Important: the LastModified information is not contained in the string representation
 func IntervalsToStrings(intervals []Interval) []string {
-	result := make([]string, len(intervals), len(intervals))
+	result := make([]string, len(intervals))
 
 	for i, element := range intervals {
 		result[i] = element.Serialize()

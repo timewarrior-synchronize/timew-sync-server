@@ -18,10 +18,11 @@ package storage
 
 import (
 	"fmt"
-	"github.com/google/go-cmp/cmp"
-	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/timewarrior-synchronize/timew-sync-server/data"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
