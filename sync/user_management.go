@@ -19,9 +19,7 @@ package sync
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -31,7 +29,7 @@ import (
 // GetUsedUserIDs returns a map containing every user id with an existing file [user id]_keys
 // in PublicKeyLocation directory
 func GetUsedUserIDs() map[int64]bool {
-	files, err := ioutil.ReadDir(PublicKeyLocation)
+	files, err := os.ReadDir(PublicKeyLocation)
 	if err != nil {
 		log.Fatal("Error accessing keys-location directory")
 	}
@@ -56,7 +54,7 @@ func GetUsedUserIDs() map[int64]bool {
 // GetFreeUserID returns the smallest valid unused user id
 func GetFreeUserID() int64 {
 	used := GetUsedUserIDs()
-	for i := int64(0); i <= math.MaxInt64; i++ {
+	for i := int64(0); i > 0; i++ {
 		if !used[i] {
 			return i
 		}
@@ -67,7 +65,7 @@ func GetFreeUserID() int64 {
 
 // ReadKey reads the key from a file
 func ReadKey(path string) string {
-	key, err := ioutil.ReadFile(path)
+	key, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Error reading key file at %v", path)
 	}

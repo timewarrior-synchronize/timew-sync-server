@@ -21,11 +21,12 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"log"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/timewarrior-synchronize/timew-sync-server/data"
-	"log"
 )
 
 //go:embed migrations/*.sql

@@ -17,10 +17,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 package storage
 
 import (
-	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/timewarrior-synchronize/timew-sync-server/data"
 )
 
 func TestIntervalToKey(t *testing.T) {

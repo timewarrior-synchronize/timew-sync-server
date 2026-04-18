@@ -19,9 +19,10 @@ package storage
 
 import (
 	"encoding/json"
-	"github.com/timewarrior-synchronize/timew-sync-server/data"
 	"log"
 	"time"
+
+	"github.com/timewarrior-synchronize/timew-sync-server/data"
 )
 
 // A UserId represents a unique ID assigned to each user of the
@@ -37,7 +38,7 @@ type IntervalKey struct {
 
 // ConvertToKeys converts a slice of data.Interval to a slice of IntervalKey
 func ConvertToKeys(data []data.Interval) []IntervalKey {
-	result := make([]IntervalKey, len(data), len(data))
+	result := make([]IntervalKey, len(data))
 	for i, interval := range data {
 		result[i] = IntervalToKey(interval)
 	}
@@ -46,7 +47,7 @@ func ConvertToKeys(data []data.Interval) []IntervalKey {
 
 // ConvertToIntervals converts a slice of IntervalKey to a slice of data.Interval
 func ConvertToIntervals(keys []IntervalKey) []data.Interval {
-	result := make([]data.Interval, len(keys), len(keys))
+	result := make([]data.Interval, len(keys))
 	for i, key := range keys {
 		result[i] = KeyToInterval(key)
 	}
