@@ -72,12 +72,17 @@ The `start` subcommand supports the following (optional) flags:
 
 ## Adding users
 
+To add users, install [timew-sync-client](https://github.com/timewarrior-synchronize/timew-sync-client) on the client machine and follow the instructions
+to generate a public-private key pair. Then copy the public key where the server can access it.
+
 New users can be registered using the `add-user` subcommand:
 ```sh
 ./timew-server add-user
 ```
 
 If no additional flags are specified, this command will return the new user id.
+The user id is *not* per-client but per-user.
+That means that a user wishing to synchronize two clients will use the same id for both.
 
 The `add-user` subcommand supports the following flags:
 - `--path`: Specifies the path to a public key and associates it with the user.
