@@ -1,6 +1,6 @@
-FROM golang:alpine AS build
+FROM golang:1.26-alpine3.24 AS build
 
-ENV APP_HOME /go/src
+ENV APP_HOME=/go/src
 
 # Install build dependencies
 RUN apk add build-base
@@ -11,16 +11,15 @@ COPY . $APP_HOME
 WORKDIR $APP_HOME
 RUN go mod download
 RUN go mod verify
-RUN go build -o /bin/timew-server
+RUN go build -o /bin/timew-sync-server
 
 # Assemble the resulting image
-FROM alpine
+FROM alpine:3.24
 
 RUN mkdir authorized_keys
-COPY --from=build /bin/timew-server /bin/server
+COPY --from=build /bin/timew-sync-server /bin/timew-sync-server
 
 EXPOSE 8080
 
-ENTRYPOINT [ "/bin/server" ]
+ENTRYPOINT [ "/bin/timew-sync-server" ]
 CMD [ "start" ]
-
