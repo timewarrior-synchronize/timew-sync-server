@@ -10,25 +10,25 @@ jobs:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
 
-    - name: Set up Go
-      uses: actions/setup-go@v7
-      with:
-        go-version: "1.25"
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.25"
 
-    - name: Test
-      run: go test -v ./...
+      - name: Test
+        run: go test -v ./...
 
-    - name: Build x86_64 macOS
-      run: GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 go build -o timew-sync-server-x86_64-macos
+      - name: Build x86_64 macOS
+        run: GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 go build -o timew-sync-server-x86_64-macos
 
-    - name: Build aarch64 macOS
-      run: GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -o timew-sync-server-aarch64-macos
+      - name: Build aarch64 macOS
+        run: GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -o timew-sync-server-aarch64-macos
 
-    - name: Release
-      uses: softprops/action-gh-release@v3.0.2
-      with:
-        files: |
-          timew-sync-server-x86_64-macos
-          timew-sync-server-aarch64-macos
+      - name: Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            timew-sync-server-x86_64-macos
+            timew-sync-server-aarch64-macos
