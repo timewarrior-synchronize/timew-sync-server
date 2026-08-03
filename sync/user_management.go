@@ -54,7 +54,7 @@ func GetUsedUserIDs() map[int64]bool {
 // GetFreeUserID returns the smallest valid unused user id
 func GetFreeUserID() int64 {
 	used := GetUsedUserIDs()
-	for i := int64(0); i > 0; i++ {
+	for i := int64(0); i >= 0; i++ {
 		if !used[i] {
 			return i
 		}
@@ -79,7 +79,7 @@ func AddKey(userID int64, key string) {
 	}
 
 	destFileName := fmt.Sprintf("%d_keys", userID)
-	destFile, err := os.OpenFile(filepath.Join(PublicKeyLocation, destFileName), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	destFile, err := os.OpenFile(filepath.Join(PublicKeyLocation, destFileName), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
 	if err != nil {
 		log.Fatalf("Error adding key. Unable to create new key file or write to existing key file with user id %v", userID)
 	}
