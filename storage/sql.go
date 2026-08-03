@@ -43,23 +43,23 @@ func (s *Sql) Initialize() error {
 
 	d, err := iofs.New(migrationsFS, "migrations")
 	if err != nil {
-		log.Fatalf("Error loading database migrations: %v", err)
+		return fmt.Errorf("sql_storage: loading database migrations: %w", err)
 	}
 
 	instance, err := sqlite3.WithInstance(s.DB, &sqlite3.Config{})
 	if err != nil {
-		log.Fatalf("Error connecting to database for migrations: %v", err)
+		return fmt.Errorf("sql_storage: connecting to database for migrations: %w", err)
 	}
 
 	m, err := migrate.NewWithInstance("iofs", d, "sqlite3", instance)
 	if err != nil {
-		log.Fatalf("Error setting up database migrations: %v", err)
+		return fmt.Errorf("sql_storage: setting up database migrations: %w", err)
 	}
 
 	err = m.Up()
 	if err != nil {
 		if err != migrate.ErrNoChange {
-			log.Fatalf("Error running database migrations: %v", err)
+			return fmt.Errorf("sql_storage: running database migrations: %w", err)
 		}
 	}
 
@@ -90,6 +90,10 @@ WHERE user_id == $1
 		}
 
 		intervals = append(intervals, interval)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("sql_storage: Error during row iteration: %w", err)
 	}
 
 	return ConvertToIntervals(intervals), nil
