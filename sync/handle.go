@@ -32,6 +32,11 @@ var PublicKeyLocation string
 // HandleSyncRequest receives sync requests and starts the sync
 // process with the received data.
 func HandleSyncRequest(w http.ResponseWriter, req *http.Request, noAuth bool) {
+	if req.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	requestBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("Error reading HTTP request, ignoring request: %v", err)

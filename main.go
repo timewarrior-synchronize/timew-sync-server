@@ -21,23 +21,27 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/timewarrior-synchronize/timew-sync-server/storage"
-	"github.com/timewarrior-synchronize/timew-sync-server/sync"
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/timewarrior-synchronize/timew-sync-server/storage"
+	"github.com/timewarrior-synchronize/timew-sync-server/sync"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var versionFlag bool
-var configFilePath string
-var portNumber int
-var keyDirectoryPath string
-var dbPath string
-var noAuth bool
-var sourcePath string
-var userID int64
+var (
+	versionFlag      bool
+	configFilePath   string
+	portNumber       int
+	keyDirectoryPath string
+	dbPath           string
+	noAuth           bool
+	sourcePath       string
+	userID           int64
+)
 
 func main() {
 	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
@@ -99,14 +103,21 @@ func main() {
 		sync.HandleSyncRequest(w, req, noAuth)
 	}
 	healthHandler := func(w http.ResponseWriter, req *http.Request) {
-                fmt.Fprint(w, "OK")
+		fmt.Fprint(w, "OK")
 	}
 
 	http.HandleFunc("/api/sync", syncHandler)
 	http.HandleFunc("/api/health", healthHandler)
 
 	log.Printf("Listening on Port %v", portNumber)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", portNumber), nil))
+	srv := &http.Server{
+		Addr:              fmt.Sprintf(":%v", portNumber),
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+	log.Fatal(srv.ListenAndServe())
 }
 
 // Subcommand for adding a new user
