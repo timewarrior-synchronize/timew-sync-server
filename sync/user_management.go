@@ -95,7 +95,6 @@ func AddKey(userID int64, key string) {
 		key = "\n" + key
 	}
 	if _, err = destFile.WriteString(key); err != nil {
-		destFile.Close()
 		log.Fatalf("Error adding key. Unable to write to key file with user id %v", userID)
 	}
 }
