@@ -47,6 +47,7 @@ func elementwiseEqual(aSlice []data.Interval, bSlice []data.Interval) bool {
 	}
 	return true
 }
+
 func sliceString(s []data.Interval) {
 	print("[\n")
 	for _, i := range s {
@@ -563,6 +564,106 @@ func TestSolveConflict_NoIntervals(t *testing.T) {
 	result, _ := store.GetIntervals(storage.UserId(0))
 	if !elementwiseEqual(serverStateNoIntervals, result) {
 		t.Errorf("NoIntervals: State after solve wrong. Expected %v got %v", serverStateNoIntervals, result)
+	}
+}
+
+type recordingStorage struct {
+	storage.Ephemeral
+	addCalls    int
+	removeCalls int
+	modifyCalls int
+}
+
+func (r *recordingStorage) AddInterval(userId storage.UserId, interval data.Interval) error {
+	r.addCalls++
+	return r.Ephemeral.AddInterval(userId, interval)
+}
+
+func (r *recordingStorage) RemoveInterval(userId storage.UserId, interval data.Interval) error {
+	r.removeCalls++
+	return r.Ephemeral.RemoveInterval(userId, interval)
+}
+
+func (r *recordingStorage) ModifyIntervals(userId storage.UserId, add []data.Interval, del []data.Interval) error {
+	r.modifyCalls++
+	return r.Ephemeral.ModifyIntervals(userId, add, del)
+}
+
+func TestSolveConflict_UsesModifyIntervals(t *testing.T) {
+	store := &recordingStorage{}
+	if err := store.Initialize(); err != nil {
+		t.Fatal(err)
+	}
+
+	intervals := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 11, 12, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 18, 30, 40, 0, time.UTC),
+			Tags:       []string{"a"},
+			Annotation: "x",
+		},
+		{
+			Start:      time.Date(2000, 5, 11, 14, 30, 40, 0, time.UTC),
+			End:        time.Date(2000, 5, 11, 21, 30, 40, 0, time.UTC),
+			Tags:       []string{"b"},
+			Annotation: "y",
+		},
+	}
+	if err := store.SetIntervals(storage.UserId(0), intervals); err != nil {
+		t.Fatal(err)
+	}
+
+	conflict, err := SolveConflict(0, store)
+	if err != nil {
+		t.Fatalf("SolveConflict returned error: %v", err)
+	}
+	if !conflict {
+		t.Fatal("expected conflict to be detected")
+	}
+	if store.modifyCalls != 1 {
+		t.Errorf("expected exactly 1 ModifyIntervals call, got %d", store.modifyCalls)
+	}
+	if store.addCalls != 0 {
+		t.Errorf("expected 0 AddInterval calls, got %d", store.addCalls)
+	}
+	if store.removeCalls != 0 {
+		t.Errorf("expected 0 RemoveInterval calls, got %d", store.removeCalls)
+	}
+}
+
+func TestSolveConflict_NoConflict_NoModifyIntervals(t *testing.T) {
+	store := &recordingStorage{}
+	if err := store.Initialize(); err != nil {
+		t.Fatal(err)
+	}
+
+	intervals := []data.Interval{
+		{
+			Start:      time.Date(2000, 5, 10, 12, 0, 0, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 13, 0, 0, 0, time.UTC),
+			Tags:       []string{"a"},
+			Annotation: "",
+		},
+		{
+			Start:      time.Date(2000, 5, 10, 14, 0, 0, 0, time.UTC),
+			End:        time.Date(2000, 5, 10, 15, 0, 0, 0, time.UTC),
+			Tags:       []string{"b"},
+			Annotation: "",
+		},
+	}
+	if err := store.SetIntervals(storage.UserId(0), intervals); err != nil {
+		t.Fatal(err)
+	}
+
+	conflict, err := SolveConflict(0, store)
+	if err != nil {
+		t.Fatalf("SolveConflict returned error: %v", err)
+	}
+	if conflict {
+		t.Fatal("expected no conflict")
+	}
+	if store.modifyCalls != 0 {
+		t.Errorf("expected 0 ModifyIntervals calls when no conflict, got %d", store.modifyCalls)
 	}
 }
 

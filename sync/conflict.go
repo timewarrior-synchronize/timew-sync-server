@@ -35,7 +35,7 @@ func SolveConflict(userId int64, store storage.Storage) (bool, error) {
 	var removed []data.Interval
 	var added []data.Interval
 	if err != nil {
-		return false, fmt.Errorf("Unable to retrieve User Data for UserId %v from Storage:\n%v", userId, err)
+		return false, fmt.Errorf("getting intervals for user %d: %w", userId, err)
 	}
 
 	// Sort intervals by ascending start time (in place)
@@ -151,23 +151,62 @@ func SolveConflict(userId int64, store storage.Storage) (bool, error) {
 		}
 	}
 
-	// Transfer solved conflict state to storage
-	for _, a := range added {
-		err = store.AddInterval(storage.UserId(userId), a)
-		if err != nil {
-			return conflictDetected, fmt.Errorf("Unable to change User Data for UserId %v in Storage:\n%v",
-				userId, err)
-		}
+	if len(added) == 0 && len(removed) == 0 {
+		return conflictDetected, nil
 	}
-	for _, r := range removed {
-		err = store.RemoveInterval(storage.UserId(userId), r)
-		if err != nil {
-			return conflictDetected, fmt.Errorf("Unable to change User Data for UserId %v in Storage:\n%v",
-				userId, err)
-		}
+
+	netAdd, netDel := computeNetDiff(added, removed)
+
+	if err := store.ModifyIntervals(storage.UserId(userId), netAdd, netDel); err != nil {
+		return conflictDetected, fmt.Errorf("modifying intervals for user %d: %w", userId, err)
 	}
 
 	return conflictDetected, nil
+}
+
+func computeNetDiff(added []data.Interval, removed []data.Interval) ([]data.Interval, []data.Interval) {
+	addedKeys := storage.ConvertToKeys(added)
+	removedKeys := storage.ConvertToKeys(removed)
+
+	addedSet := make(map[storage.IntervalKey]int, len(addedKeys))
+	for _, key := range addedKeys {
+		addedSet[key]++
+	}
+
+	removedSet := make(map[storage.IntervalKey]int, len(removedKeys))
+	for _, key := range removedKeys {
+		removedSet[key]++
+	}
+
+	for key, rc := range removedSet {
+		if ac, ok := addedSet[key]; ok {
+			common := min(ac, rc)
+			addedSet[key] -= common
+			if addedSet[key] == 0 {
+				delete(addedSet, key)
+			}
+			removedSet[key] -= common
+			if removedSet[key] == 0 {
+				delete(removedSet, key)
+			}
+		}
+	}
+
+	netAdd := filterBySet(added, addedKeys, addedSet)
+	netDel := filterBySet(removed, removedKeys, removedSet)
+
+	return netAdd, netDel
+}
+
+func filterBySet(intervals []data.Interval, keys []storage.IntervalKey, set map[storage.IntervalKey]int) []data.Interval {
+	var result []data.Interval
+	for i, key := range keys {
+		if set[key] > 0 {
+			result = append(result, intervals[i])
+			set[key]--
+		}
+	}
+	return result
 }
 
 // UniteTagsAndAnnotation computes the new tags and annotation for overlapping intervals and returns tags, annotation.
